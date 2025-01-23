@@ -17,6 +17,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@octokit/rest": "^21.1.0",
     "child_process": "^1.0.2",
     "probot": "^13.4.1",
     "simple-git": "^3.27.0"

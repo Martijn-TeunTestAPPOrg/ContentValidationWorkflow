@@ -8,10 +8,10 @@ Report_1 = {} # Report 1 data
 Report_2 = {} # Report 2 data
 
 # Constants
-SRC_DIR = "src/temp_content/content" # Source directory where the markdown files are located
-DEST_DIR = "src/temp_content/build" # Destination directory where the updated markdown files will be saved
-TAXCO_REPORT_PATH = "src/temp_content/taxco_report.md" # Taxco report path where the taxco report will be saved
-CONTENT_REPORT_PATH = "src/temp_content/content_report.md" # Content report path where the content report will be saved
+SRC_DIR = "src/cloned_repo/content" # Source directory where the markdown files are located
+DEST_DIR = "src/cloned_repo/build" # Destination directory where the updated markdown files will be saved
+TAXCO_REPORT_PATH = "src/cloned_repo/taxco_report.md" # Taxco report path where the taxco report will be saved
+CONTENT_REPORT_PATH = "src/cloned_repo/content_report.md" # Content report path where the content report will be saved
 DATASET = "src/datasets/dataset.xlsx" # Dataset containing the taxonomie information
 TODO_PATTERN = r'-=[A-Z]+=-' # To-Do pattern
 TAXONOMIE_PATTERN = r'^[a-z]{2}-\d{1,3}\.[123]\.[^\s\.]+(-[^\s\.]+)*\.(?:OI|DT|PI|LT)$' # Taxonomie pattern

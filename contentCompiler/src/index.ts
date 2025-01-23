@@ -1,188 +1,366 @@
-import { Probot } from "probot";
+import { Probot, Context } from "probot";
 import { exec } from 'child_process';
 import path from "path";
 import { simpleGit } from "simple-git";
 import * as fs from "fs";
 
-
-const git = simpleGit();
+const gitAppName = "ContentCompiler";
+const gitAppEmail = "1112193+github[bot]@users.noreply.github.com";
 
 export default (app: Probot) => {
-  app.on("push", async (context) => {
-    const payload = context.payload;
-    const branch = payload.ref.replace('refs/heads/', '');
-    if (branch === "content") {
-      context.log.info(`Push detected on branch ${branch}`);
-      const payload = context.payload;
-      const repoOwner = payload.repository.owner.login;
-      const repoName = payload.repository.name;
-      const repoUrl = payload.repository.clone_url;
-      const tempContentFolder = 'src/temp_content'
-      const tempStorageFolder = 'src/temp_storage';
+	app.on("push", async (context) => {
+		// Skip if this is a commit from our app
+		if (isAppCommit(context)) {
+			return;
+		}
 
-      const __dirname = process.cwd();
-      context.log.info(`Push event received for ${repoOwner}/${repoName}`);
-      const cloneDirectory = path.join(__dirname, "src/temp_content");
+		const payload = context.payload;
+		const branch = payload.ref.replace('refs/heads/', '');
+		const repoOwner = payload.repository.owner.login;
+		const repoName = payload.repository.name;
+		const repoUrl = payload.repository.clone_url;  
 
-      ///
-      try {
-        if (fs.existsSync(cloneDirectory)) {
-          deleteFolderRecursiveSync(cloneDirectory)
-        }
-        context.log.info(`Cloning repository ${repoName} from ${repoUrl}...`);
-        await git.clone(repoUrl, cloneDirectory);
-        context.log.info(`Repository ${repoName} cloned successfully to ${cloneDirectory}`);
-      }
-      catch (error: any) {
-        context.log.error(`Failed to clone repository: ${error.message}`);
-      }
+		if (branch === "content") {
+			context.log.info(`Push event received for ${repoOwner}/${repoName}`);
 
-      ///
-      try {
-        context.log.info(`Checking out to the 'content' branch...`);
-        await git.cwd(cloneDirectory).checkout("content");
+			const clonedRepoFolder = 'src/cloned_repo'
+			const tempStorageFolder = 'src/temp_storage';
+			const reportFiles = ['taxco_report.md', 'content_report.md'];
 
-        context.log.info(`Repository ${repoName} cloned and checked out to 'content' branch successfully`);
-      }
-      catch (error: any) {
-        context.log.error(`Failed to clone and checkout repository: ${error.message}`);
-      }
-      exec('python3 src/scripts/compile_content.py', (error: any, stdout: any) => {
-        if (error) {
-          context.log.error(`Execution error: ${error.message}`);
-          return;
-        }
-        context.log.info(`Output: ${stdout}`);
-      });
+			const __dirname = process.cwd();
+			const cloneTargetDirectory = path.join(__dirname, "src/cloned_repo");
+			const cloneBuildDirectory = path.join(cloneTargetDirectory, 'build');
 
-      const sourceFiles = ['taxco_report.md', 'content_report.md'];
-      await waitForFiles(path.join(__dirname, tempContentFolder, sourceFiles[0]))
+			const sourceBuildDirectory = path.join(__dirname, clonedRepoFolder, 'build');
+			const tempDestinationBuildDir = path.join(__dirname, tempStorageFolder, 'build');
 
-      sourceFiles.forEach((file) => {
-        const sourcePath = path.join(__dirname, tempContentFolder, file);
-        const destinationPath = path.join(__dirname, tempStorageFolder, file);
-        fs.copyFileSync(sourcePath, destinationPath);
-      });
+			// Get the installation token
+			const octokit = await app.auth();
+			const installationId = context.payload.installation?.id;
+			if (!installationId) {
+				throw new Error('No installation ID found');
+			}
+			const { token } = await octokit.auth({
+				type: 'installation',
+				installationId
+			}) as { token: string };
 
-      ///
-      const sourceBuildDir = path.join(__dirname, tempContentFolder, 'build');
-      const destinationBuildDir = path.join(__dirname, tempStorageFolder, 'build');
+			// Configure git with token
+			const remoteUrl = `https://x-access-token:${token}@github.com/${repoOwner}/${repoName}.git`;
+			
+			let git = simpleGit();
 
-      if (fs.existsSync(destinationBuildDir)) {
-        deleteFolderRecursiveSync(destinationBuildDir)
-      }
-      fs.mkdirSync(destinationBuildDir);
+			// Setup git
+			const configureGit = async () => {
+				await git.addConfig("user.name", gitAppName, false, 'local');
+				await git.addConfig("user.email", gitAppEmail, false, 'local');
+				// Set committer info explicitly
+				await git.addConfig("committer.name", gitAppName, false, 'local');
+				await git.addConfig("committer.email", gitAppEmail, false, 'local');
+			};
 
-      fs.readdirSync(sourceBuildDir).forEach((file) => {
-        const sourcePath = path.join(sourceBuildDir, file);
-        const destinationPath = path.join(destinationBuildDir, file);
+		// Step 2: Remove the temp folders
+			try {
+				// Remove the cloned_repo folder if it exists
+				if (fs.existsSync(cloneTargetDirectory)) {
+					deleteFolderRecursiveSync(cloneTargetDirectory);
+				}
+				fs.mkdirSync(cloneTargetDirectory);
+				// Remove the cloned_repo folder if it exists
+				if (fs.existsSync(tempStorageFolder)) {
+					deleteFolderRecursiveSync(tempStorageFolder);
+				}
+				fs.mkdirSync(tempStorageFolder);
+			} catch (error: any) {
+				context.log.error(`Failed to remove temp folders: ${error.message}`);
+				return;
+			}
 
-        if (fs.lstatSync(sourcePath).isDirectory()) {
-          context.log.info(sourcePath)
-          fs.cpSync(sourcePath, destinationPath, { recursive: true });
-        } else {
-          fs.copyFileSync(sourcePath, destinationPath);
-        }
-      });
-      deleteFolderRecursiveSync(sourceBuildDir)
+		// Step 3: Clone the repository
+			try {
+				context.log.info(`Cloning repository ${repoName} from ${repoUrl}...`);
 
-      try {
-        await git.add(['content_report.md', 'taxco_report.md'])
-        const status = await git.status()
-        if (!status.isClean()) {
-          await git.commit("Update reports")
-          await git.push('origin', 'content')
-          context.log.info('Reports committed and pushed to content branch');
-        }
-        else {
-          context.log.info('No changes to commit');
-        }
-      }
-      catch (error: any) {
-        context.log.error(`Failed to commit and push reports: ${error.message}`);
-      }
+				await git.clone(repoUrl, cloneTargetDirectory);
 
-      // try {
-      //   context.log.info(`Checking out to the 'staging' branch...`);
-      //   await git.cwd(cloneDirectory).checkout("content");
+				await git.cwd(cloneTargetDirectory);
+				await git.remote(['set-url', 'origin', remoteUrl]);
 
-      //   if (fs.existsSync(sourceBuildDir)) {
-      //     deleteFolderRecursiveSync(sourceBuildDir)
-      //   }
-      //   fs.mkdirSync(sourceBuildDir)
+				context.log.info(`Repository ${repoName} cloned successfully to ${cloneTargetDirectory}`);
+			}
+			catch (error: any) {
+				context.log.error(`Failed to clone repository: ${error.message}`);
+				return
+			}
 
-      //   fs.readdirSync(destinationBuildDir).forEach((file) => {
-      //     const sourcePath = path.join(destinationBuildDir, file);
-      //     const destinationPath = path.join(sourceBuildDir, file);
+		// Step 4: Checkout to the 'content' branch
+			try {
+				context.log.info(`Checking out to the 'content' branch...`);
+				await git.cwd(cloneTargetDirectory).checkout("content");
 
-      //     if (fs.lstatSync(sourcePath).isDirectory()) {
-      //       context.log.info(sourcePath)
-      //       fs.cpSync(sourcePath, destinationPath, { recursive: true });
-      //     } else {
-      //       fs.copyFileSync(sourcePath, destinationPath);
-      //     }
-      //   });
-      //   deleteFolderRecursiveSync(destinationBuildDir)
+				context.log.info(`Checked out to 'content' branch successfully`);
+			}
+			catch (error: any) {
+				context.log.error(`Failed to checkout content branch: ${error.message}`);
+				return;
+			}
 
-      //   await git.add('build/')
+		// Step 5: Compile the content
+			await new Promise<void>((resolve, reject) => {
+				context.log.info(`Compiling content...`);
+				exec('python src/scripts/compile_content.py', (error: any, stdout: any) => {
+					if (error) {
+						context.log.error(`Execution error: ${error.message}`);
+						reject(error);
+						return;
+					}
+					context.log.info(`Output: ${stdout}`);
+					resolve();
+				});
+			});
 
-      //   const sourceFiles = ['taxco_report.md', 'content_report.md'];
+		// Step 6: Copy the reports to the storage folder
+			try {
+				context.log.info(`Copying reports to the storage folder...`);
+				
+				reportFiles.forEach((file) => {
+					const sourcePath = path.join(__dirname, clonedRepoFolder, file);
+					const destinationPath = path.join(__dirname, tempStorageFolder, file);
+					fs.copyFileSync(sourcePath, destinationPath);
+				});
+			} catch (error: any) {
+				context.log.error(`Failed to copy reports to the storage folder: ${error.message}`);
+				return;
+			}
 
-      //   sourceFiles.forEach((file) => {
-      //     const sourcePath = path.join(__dirname, tempStorageFolder, file);
-      //     const destinationPath = path.join(__dirname, tempContentFolder, file);
-      //     fs.copyFileSync(sourcePath, destinationPath);
-      //   });
-      //   await git.add('taxco_report.md')
-      //   await git.add('content_report.md')
+		// Step 7: Move build to temp_storage
+			try {
+				context.log.info(`Copying build to the storage folder...`);
 
-      //   const statusBeforeCommit = await git.status();
-      //   if (!statusBeforeCommit.isClean()) {
-      //     await git.commit('Sync compiled files and reports to staging');
-      //     await git.push('origin', 'staging')
-      //   } else {
-      //     context.log.info('No changes to commit');
-      //   }
+				// Copy build directory to temp destination
+				fs.readdirSync(sourceBuildDirectory).forEach((file) => {
+					const sourcePath = path.join(sourceBuildDirectory, file);
+					const destinationPath = path.join(tempDestinationBuildDir, file);
 
-      // }
-      // catch (error: any) {
-      //   context.log.error(`Failed to sync to staging branch: ${error.message}`);
-      // }
+					if (fs.lstatSync(sourcePath).isDirectory()) {
+						fs.cpSync(sourcePath, destinationPath, { recursive: true });
+					} else {
+						fs.copyFileSync(sourcePath, destinationPath);
+					}
+				});
 
+				// Delete source build directory
+				deleteFolderRecursiveSync(sourceBuildDirectory);
+			} catch (error: any) {
+				context.log.error(`Failed to copy build to the storage folder: ${error.message}`);
+				return;
+			}
 
+		// Step 8: Commit and push reports to the 'content' branch
+			try {
+				context.log.info(`Committing and pushing reports to the 'content' branch...`);
+				await configureGit(); // Configure git before committing
+		  
+				await git.add(reportFiles);
+				const status = await git.status();
+				
+				if (!status.isClean()) {
+					const commitMessage = "Update reports [bot-commit]";
+					await git.commit(commitMessage, undefined, {
+						'--author': `${gitAppName} <${gitAppEmail}>`,
+						'--no-verify': null
+					});
+					await git.push('origin', 'content');
+				} else {
+				  	context.log.info('No changes to commit');
+				}
+			} catch (error: any) {
+				context.log.error(`Failed to commit and push reports: ${error.message}`);
+				return;
+			}
 
-    }
-  });
+		// Step 9: Remove everything from cloned_repo
+			try {
+				context.log.info(`Removing cloned repository ${repoName}...`);
+				deleteFolderRecursiveSync(cloneTargetDirectory);
+			} catch (error: any) {
+				context.log.error(`Failed to remove cloned repo: ${error.message}`);
+				return;
+			}
 
-  const deleteFolderRecursiveSync = (folderPath: string) => {
-    if (fs.existsSync(folderPath)) {
-      const files = fs.readdirSync(folderPath);
-      files.forEach((file) => {
-        const currentPath = path.join(folderPath, file);
-        if (fs.statSync(currentPath).isDirectory()) {
-          deleteFolderRecursiveSync(currentPath);
-        } else {
-          fs.unlinkSync(currentPath);
-        }
-      });
-      fs.rmdirSync(folderPath);
-    } else {
-      app.log.warn(`Folder ${folderPath} does not exist`);
-    }
-  }
-  const waitForFiles = async (sourcePath: any) => {
-    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    let attempts = 5;
-    while (attempts > 0) {
-      if (fs.existsSync(sourcePath)) {
-        console.log('File is ready:', sourcePath);
-        return true;
-      }
-      console.log(`Waiting for file to be available... (${5 - attempts + 1}/5)`);
-      await delay(1000);
-      attempts--;
-    }
-    throw new Error('File did not become available in time.');
-  }
+			git = simpleGit({ baseDir: process.cwd() });
+		
+		// Step 10: Clone the repository
+			try {
+				context.log.info(`Cloning repository ${repoName} from ${repoUrl}...`);
+
+				await git.clone(repoUrl, cloneTargetDirectory);
+				await git.remote(['set-url', 'origin', remoteUrl]);
+
+				context.log.info(`Repository ${repoName} cloned successfully to ${cloneTargetDirectory}`);
+			}
+			catch (error: any) {
+				context.log.error(`Failed to clone repository: ${error.message}`);
+				return
+			}
+
+			git = simpleGit({ baseDir: cloneTargetDirectory });
+			
+		// Step 11: Check out to the 'staging' branch
+			try {
+				context.log.info(`Checking out to the 'staging' branch...`);
+				await git.cwd(cloneTargetDirectory).checkout("staging");
+			} catch (error: any) {
+				context.log.error(`Failed to checkout to the 'staging' branch: ${error.message}`);
+				return;
+			}
+
+		// Step 12: Pull the latest changes from the 'staging' branch
+			try {
+				context.log.info(`Pulling the latest changes from the 'staging' branch...`);
+				await git.pull('origin', 'staging');
+			} catch (error: any) {
+				context.log.error(`Failed to pull the latest changes from the 'staging' branch: ${error.message}`);
+				return;
+			}
+
+		// Step 13: Remove the build directory from the 'staging' branch
+			try {
+				context.log.info('Removing the build directory from the staging branch...');
+
+				if (fs.existsSync(cloneBuildDirectory)) {
+					await git.rm(['-r', 'build/']);
+					deleteFolderRecursiveSync(cloneBuildDirectory);
+				}
+			} catch (error: any) {
+				context.log.error(`Failed to remove the build directory from the staging branch: ${error.message}`);
+				return;
+			}
+
+		// Step 14: Remove the reports from the 'staging' branch
+			try {
+				context.log.info('Removing the reports from the staging branch...');
+				
+				reportFiles.forEach((file) => {
+					const filePath = path.join(cloneTargetDirectory, file);
+					if (fs.existsSync(filePath)) {
+						context.log.info(`Removing ${filePath}...`);
+						fs.rmSync(filePath, { force: true });
+					} else {
+						context.log.info(`File ${file} does not exist, skipping...`);
+					}
+				});
+			} catch (error: any) {
+				context.log.error(`Failed to remove the reports from the staging branch: ${error.message}`);
+				return;
+			}
+
+		// Step 15: Sync the compiled files and reports to the 'staging' branch
+			try {
+				// Copy the build directory to the repo root
+				context.log.info('Copying build to the repository root...');
+				fs.readdirSync(tempDestinationBuildDir).forEach((file) => {
+					const sourcePath = path.join(tempDestinationBuildDir, file);
+					const destinationPath = path.join(sourceBuildDirectory, file);
+
+					if (fs.lstatSync(sourcePath).isDirectory()) {
+						fs.cpSync(sourcePath, destinationPath, { recursive: true });
+					} else {
+						fs.copyFileSync(sourcePath, destinationPath);
+					}
+				});
+			} catch (error: any) {
+				context.log.error(`Failed to copy build to the repository root: ${error.message}`);
+				return;
+			}
+
+		// Step 16: Copy the reports to the staging branch
+			try {
+				context.log.info(`Copying reports to the storage folder...`);
+				
+				reportFiles.forEach((file) => {
+					const sourcePath = path.join(__dirname, tempStorageFolder, file);
+					const destinationPath = path.join(__dirname, clonedRepoFolder, file);
+					fs.copyFileSync(sourcePath, destinationPath);
+				});
+			} catch (error: any) {
+				context.log.error(`Failed to copy reports to the storage folder: ${error.message}`);
+				return;
+			}
+
+		// Step 17: Commit and push the compiled files and reports to the 'staging' branch
+			try {
+				context.log.info('Committing and pushing compiled files and reports to the staging branch...');
+				await configureGit(); // Configure git before committing
+		
+				await git.add('build/');
+				await git.add('taxco_report.md');
+				await git.add('content_report.md');
+		
+				const statusBeforeCommit = await git.status();
+				if (!statusBeforeCommit.isClean()) {
+					await git.commit('Sync compiled files and reports to staging', undefined, {
+						'--author': `${gitAppName} <${gitAppEmail}>`,
+						'--no-verify': null
+					});
+					await git.push('origin', 'staging');
+				} else {
+					context.log.info('No changes to commit');
+				}
+			} catch (error: any) {
+				context.log.error(`Failed to sync to staging branch: ${error.message}`);
+				return;
+			}
+
+		// Step 18: Remove the cloned repo directory
+			try {
+				context.log.info('Removing the cloned repo directory...');
+				deleteFolderRecursiveSync(cloneTargetDirectory);
+			} catch (error: any) {
+				context.log.error(`Failed to remove the cloned repo directory: ${error.message}`);
+				return;
+			}
+
+		// Step 19: Remove the temp storage folder
+			try {
+				context.log.info('Removing the temp storage folder...');
+				deleteFolderRecursiveSync(tempStorageFolder);
+			} catch (error: any) {
+				context.log.error(`Failed to remove the temp storage folder: ${error.message}`);
+				return;
+			}
+
+			context.log.info('Sync to staging branch completed successfully');
+		}
+	});
+
+	// Helper function to delete a folder recursively
+	const deleteFolderRecursiveSync = (folderPath: string) => {
+		if (fs.existsSync(folderPath)) {
+			const files = fs.readdirSync(folderPath);
+
+			files.forEach((file) => {
+				const currentPath = path.join(folderPath, file);
+
+				if (fs.statSync(currentPath).isDirectory()) {
+					deleteFolderRecursiveSync(currentPath);
+				} else {
+					fs.unlinkSync(currentPath);
+				}
+			});
+
+			fs.rmdirSync(folderPath);
+		} else {
+			app.log.warn(`Folder ${folderPath} does not exist`);
+		}
+	}
+
+	// Helper function to check if the commit is from our app
+	function isAppCommit(context: Context<'push'>) {
+		const sender = context.payload.sender;
+		const commits = context.payload.commits || [];
+		
+		// Check both the sender and the commit message
+		return (sender && sender.type === 'Bot' && sender.login.endsWith('[bot]')) ||
+			   commits.some(commit => commit.message.includes('[bot-commit]'));
+	}
 };
-

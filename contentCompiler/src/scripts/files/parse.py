@@ -13,6 +13,7 @@ from config import ERROR_MISSING_TAXCO, FAIL_CROSS, NOT_NEEDED, WARNING, SUCCESS
 from files.images import copyImages
 from files.links import updateDynamicLinks
 from files.markdown_utils import extractHeaderValues, generateTags, createFileReportRow, findWIPItems
+from files.dataset import checkRowEmpty
 
 
 # Parse the dataset file from a XLSX file to a list.
@@ -20,17 +21,15 @@ def parseDatasetFile(dataset_file):
     global dataset
     try:
         df = pd.read_excel(dataset_file)
-        # if df.isnull().values.any():
-        #     raise ValueError("Dataset contains empty rows or cells.")
         csv_data = df.to_csv(index=False, sep=';')
         reader = csv.reader(csv_data.splitlines(), delimiter=';', quotechar='|')
         dataset.extend(list(reader))
+        for row in dataset[1:]:
+            if checkRowEmpty(row): 
+                dataset.remove(row)
     except FileNotFoundError:
         print(f"File {dataset_file} not found.")
         exit(404)
-    # except ValueError as ve:
-    #     print(f"Error: {ve}")
-    #     exit(2)
     except Exception as e:
         print(f"An error occurred while reading the dataset file: {e}")
         exit(404)

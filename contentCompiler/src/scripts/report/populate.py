@@ -2,15 +2,15 @@
 from pathlib import Path
 
 # Variables
-from config import dataset, Report_1, Report_2
+from config import dataset, report1, report2
 
 # Constants
 from config import TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, NOT_NECESSARY, LT_COL, DT_COL, OI_COL, PI_COL, LT, DT, OI, PI
 
 
-## Structure of Report_1
+## Structure of report_1
 #
-# Report_1 = {
+# report_1 = {
 #     'rv-8' : {
 #         'Proces' : "Requirementanalyseproces"
 #         'Processtap' : "Verzamelen requirements",
@@ -23,9 +23,9 @@ from config import TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, NOT_NE
 #     }
 # }
 
-## Structure of Report_2
+## Structure of report_2
 #
-# Report_2 = {
+# report_2 = {
 #     'functioneel-ontwerp' : {
 #         'oo-15' : {
 #             'TC2' : ['x', 'x', 'x'],
@@ -66,28 +66,28 @@ Fills the report 1 data with the data from the dataset
 Every TC1 code is the unique identifier
 """
 def populateReport1():
-    global Report_1
+    global report1
 
     for row in dataset[1:]:
-        tc_1 = row[TC1_COL]
-        tc_2 = row[TC2_COL]
+        tc1 = row[TC1_COL]
+        tc2 = row[TC2_COL]
         proces = row[PROCES_COL]
         processtap = row[PROCESSTAP_COL]
 
-        if tc_1 in Report_1:
-            if Report_1[tc_1]['TC2'][1] == '🏳️' or Report_1[tc_1]['TC2'][2] == '🏳️':
-                splitted_tc2 = tc_2.split(',')
+        if tc1 in report1:
+            if report1[tc1]['TC2'][1] == '🏳️' or report1[tc1]['TC2'][2] == '🏳️':
+                splittedTc2 = tc2.split(',')
                 for index in range(1, 3):
-                    if Report_1[tc_1]['TC2'][index] == '🏳️' and splitted_tc2[index] != '🏳️':
-                        Report_1[tc_1]['TC2'][index] = splitted_tc2[index]
+                    if report1[tc1]['TC2'][index] == '🏳️' and splittedTc2[index] != '🏳️':
+                        report1[tc1]['TC2'][index] = splittedTc2[index]
 
-        if tc_1 not in Report_1: 
-            splitted_tc2 = tc_2.split(',')
+        if tc1 not in report1: 
+            splittedTc2 = tc2.split(',')
 
-            Report_1[tc_1] = {
+            report1[tc1] = {
                 "Proces" : proces,
                 "Processtap" : processtap,
-                'TC2': [NOT_NECESSARY if splitted_tc2[0] == 'X' else 'x', NOT_NECESSARY if splitted_tc2[1] == 'X' else 'x', NOT_NECESSARY if splitted_tc2[2] == 'X' else 'x']        
+                'TC2': [NOT_NECESSARY if splittedTc2[0] == 'X' else 'x', NOT_NECESSARY if splittedTc2[1] == 'X' else 'x', NOT_NECESSARY if splittedTc2[2] == 'X' else 'x']        
             }
 
 """
@@ -95,32 +95,32 @@ Fills the Report 2 data with the data from the dataset.
 Every unique TC3 and TC1 combination will be added to the Report 2 data.
 """
 def populateReport2():
-    global Report_2
+    global report2
 
     for row in dataset[1:]:
-        tc_1 = row[TC1_COL]
-        tc_2 = row[TC2_COL]
-        tc_3 = row[TC3_COL]
+        tc1 = row[TC1_COL]
+        tc2 = row[TC2_COL]
+        tc3 = row[TC3_COL]
         lt = row[LT_COL]
         oi = row[OI_COL]
         pi = row[PI_COL]
         dt = row[DT_COL]
 
-        if tc_3 not in Report_2:
-            Report_2[tc_3] = {}
+        if tc3 not in report2:
+            report2[tc3] = {}
 
-        if tc_1 not in Report_2[tc_3]:
-            splitted_tc2 = tc_2.split(',')
-            splitted_lt = lt.split(',')
-            splitted_oi = oi.split(',')
-            splitted_pi = pi.split(',')
-            splitted_dt = dt.split(',')
+        if tc1 not in report2[tc3]:
+            splittedTc2 = tc2.split(',')
+            splittedLT = lt.split(',')
+            splittedOI = oi.split(',')
+            splittedPI = pi.split(',')
+            splittedDT = dt.split(',')
             
-            Report_2[tc_3][tc_1] = {
-                'TC2': [NOT_NECESSARY if splitted_tc2[0] == 'X' else 'x', NOT_NECESSARY if splitted_tc2[1] == 'X' else 'x', NOT_NECESSARY if splitted_tc2[2] == 'X' else 'x'],
-                LT: [NOT_NECESSARY if splitted_lt[0] == 'X' else 'x', NOT_NECESSARY if splitted_lt[1] == 'X' else 'x', NOT_NECESSARY if splitted_lt[2] == 'X' else 'x'],
-                OI: [NOT_NECESSARY if splitted_oi[0] == 'X' else 'x', NOT_NECESSARY if splitted_oi[1] == 'X' else 'x', NOT_NECESSARY if splitted_oi[2] == 'X' else 'x'],
-                PI: [NOT_NECESSARY if splitted_pi[0] == 'X' else 'x', NOT_NECESSARY if splitted_pi[1] == 'X' else 'x', NOT_NECESSARY if splitted_pi[2] == 'X' else 'x'],
-                DT: [NOT_NECESSARY if splitted_dt[0] == 'X' else 'x', NOT_NECESSARY if splitted_dt[1] == 'X' else 'x', NOT_NECESSARY if splitted_dt[2] == 'X' else 'x'],
+            report2[tc3][tc1] = {
+                'TC2': [NOT_NECESSARY if splittedTc2[0] == 'X' else 'x', NOT_NECESSARY if splittedTc2[1] == 'X' else 'x', NOT_NECESSARY if splittedTc2[2] == 'X' else 'x'],
+                LT: [NOT_NECESSARY if splittedLT[0] == 'X' else 'x', NOT_NECESSARY if splittedLT[1] == 'X' else 'x', NOT_NECESSARY if splittedLT[2] == 'X' else 'x'],
+                OI: [NOT_NECESSARY if splittedOI[0] == 'X' else 'x', NOT_NECESSARY if splittedOI[1] == 'X' else 'x', NOT_NECESSARY if splittedOI[2] == 'X' else 'x'],
+                PI: [NOT_NECESSARY if splittedPI[0] == 'X' else 'x', NOT_NECESSARY if splittedPI[1] == 'X' else 'x', NOT_NECESSARY if splittedPI[2] == 'X' else 'x'],
+                DT: [NOT_NECESSARY if splittedDT[0] == 'X' else 'x', NOT_NECESSARY if splittedDT[1] == 'X' else 'x', NOT_NECESSARY if splittedDT[2] == 'X' else 'x'],
             }  
  

@@ -1,19 +1,18 @@
 # Variables
-from config import VERBOSE, Report_1, Report_2
+from config import VERBOSE, report1, report2
 
 # Constants
 from config import LT, DT, OI, PI, FAIL_CIRCLE, SUCCESS, NOT_NECESSARY
 
 # Functions
-from files.images import formatImageReportTable
 from report.table import generateMarkdownTable
 
 """
 Generate the report based on the taxonomie report, success, and failed reports.
 """
-def generateTaxcoReport(REPORT_PATH):
+def generateTaxcoReport(reportPath):
     if VERBOSE: print("Generating report...")
-    with open(REPORT_PATH, "w", encoding="utf-8") as f:
+    with open(reportPath, "w", encoding="utf-8") as f:
         f.write('---\ndraft: true\n---\n')
         
         f.write('## Rapport 1 - Processtappen\n')
@@ -53,7 +52,7 @@ def generateProcess():
 
     headers = ["TC1", "Proces", "Processtap", "Niveau 1", "Niveau 2", "Niveau 3"]
     rows = []
-    for tc, details in Report_1.items():
+    for tc, details in report1.items():
         proces = details.get('Proces', '')
         processtap = details.get('Processtap', '')
         tc2_levels = details.get('TC2', {})
@@ -85,7 +84,7 @@ def generateSubject():
         else:
             return NOT_NECESSARY
 
-    for tc3, details in Report_2.items():
+    for tc3, details in report2.items():
         for tc1, other in details.items():
             tc2_levels = other.get('TC2', [''] * 3)
             tc2 = ' '.join([getStatus(level) for level in tc2_levels])

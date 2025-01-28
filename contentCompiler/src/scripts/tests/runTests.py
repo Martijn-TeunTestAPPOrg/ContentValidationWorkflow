@@ -14,23 +14,23 @@ from files.images import fillFailedImages
 from report.generateTaxcoReport import generateTaxcoReport
 from report.generateContentReport import generateContentReport
 from files.parse import parseMarkdownFiles, parseDatasetFile
-from tests.evaluate import evaluate_tests
+from tests.evaluate import evaluateTests
 from report.populate import populateReport1, populateReport2
 
-def validate_test_report(expected, actual):
+def validateTestReport(expected, actual):
 
-    expected_test_report_path =  Path(__file__).resolve().parents[1] / expected
-    actual_test_report_path = Path(__file__).resolve().parents[1] / actual
-    with open(expected_test_report_path, 'r') as f1, open(actual_test_report_path, 'r') as f2:
-        expected_test_report_content = f1.read()
-        actual_test_report_content = f2.read()
+    expectedTestReportPath =  Path(__file__).resolve().parents[1] / expected
+    actualTestReportPath = Path(__file__).resolve().parents[1] / actual
+    with open(expectedTestReportPath, 'r') as f1, open(actualTestReportPath, 'r') as f2:
+        expectedTestReportContent = f1.read()
+        actualTestReportContent = f2.read()
 
-    if expected_test_report_content == actual_test_report_content:
+    if expectedTestReportContent == actualTestReportContent:
         return True
     else:
         return False
     
-def validate_draft():
+def validateDraft():
     expectedAmountOfDraftFiles = len(failedFiles)
     actualAmountOfDraftFiles = 0
     for file in failedFiles:
@@ -85,13 +85,13 @@ def test():
     generateTaxcoReport(TAXCO_REPORT_PATH)
     generateContentReport(CONTENT_REPORT_PATH) 
 
-    if validate_test_report('tests/reports/expected_taxco_test_report.md', 'tests/reports/actual_taxco_test_report.md'): 
+    if validateTestReport('tests/reports/expected_taxco_test_report.md', 'tests/reports/actual_taxco_test_report.md'): 
         print("Taxco test report validation successful")
-        if validate_test_report('tests/reports/expected_content_test_report.md', 'tests/reports/actual_content_test_report.md'):
+        if validateTestReport('tests/reports/expected_content_test_report.md', 'tests/reports/actual_content_test_report.md'):
             print("Content Test report validation successful")
-            if evaluate_tests():
+            if evaluateTests():
                 print("Test evaluation successful")
-                if(validate_draft()):
+                if(validateDraft()):
                     print("Draft test successful")
                     sys.exit(0)
                 else:

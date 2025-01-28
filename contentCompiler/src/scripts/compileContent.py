@@ -47,10 +47,10 @@ def main():
     generateContentReport(CONTENT_REPORT_PATH)
 
 if __name__ == "__main__":
-    start_time = time.time()
+    startTime = time.time()
 
     main()
 
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"Execution time: {elapsed_time:.2f} seconds")
+    endTime = time.time()
+    elapsedTime = endTime - startTime
+    print(f"Execution time: {elapsedTime:.2f} seconds")

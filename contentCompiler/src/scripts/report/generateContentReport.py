@@ -2,16 +2,15 @@
 from config import VERBOSE, WIPFiles, failedFiles, failedImages, parsedFiles
 
 # Functions
-from files.markdown_utils import formatFileReportTable
+from contentCompiler.src.scripts.files.markdownUtils import formatFileReportTable
 from files.images import formatImageReportTable
-from report.table import generateMarkdownTable
 
 """
 Generate the report based on the taxonomie report, success, and failed reports.
 """
-def generateContentReport(REPORT_PATH):
+def generateContentReport(reportPath):
     if VERBOSE: print("Generating report...")
-    with open(REPORT_PATH, "w", encoding="utf-8") as f:
+    with open(reportPath, "w", encoding="utf-8") as f:
         f.write('---\ndraft: true\n---\n')
         
         f.write("## Work-in-progress bestanden\n")

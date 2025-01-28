@@ -12,41 +12,41 @@ from config import ERROR_MISSING_TAXCO, FAIL_CROSS, NOT_NEEDED, WARNING, SUCCESS
 # Functions
 from files.images import copyImages
 from files.links import updateDynamicLinks
-from files.markdown_utils import extractHeaderValues, generateTags, createFileReportRow, findWIPItems
+from contentCompiler.src.scripts.files.markdownUtils import extractHeaderValues, generateTags, createFileReportRow, findWIPItems
 from files.dataset import checkRowEmpty
 
 
 # Parse the dataset file from a XLSX file to a list.
-def parseDatasetFile(dataset_file):
+def parseDatasetFile(datasetFile):
     global dataset
     try:
-        df = pd.read_excel(dataset_file)
-        csv_data = df.to_csv(index=False, sep=';')
-        reader = csv.reader(csv_data.splitlines(), delimiter=';', quotechar='|')
+        df = pd.read_excel(datasetFile)
+        csvData = df.to_csv(index=False, sep=';')
+        reader = csv.reader(csvData.splitlines(), delimiter=';', quotechar='|')
         dataset.extend(list(reader))
         for row in dataset[1:]:
             if checkRowEmpty(row): 
                 dataset.remove(row)
     except FileNotFoundError:
-        print(f"File {dataset_file} not found.")
+        print(f"File {datasetFile} not found.")
         exit(404)
     except Exception as e:
         print(f"An error occurred while reading the dataset file: {e}")
         exit(404)
 
 # Update markdown files in the source directory with taxonomie tags and generate reports.
-def parseMarkdownFiles(SRC_DIR, DEST_DIR, skipValidateDynamicLinks):
+def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
     if VERBOSE: print("Parsing markdown files...")
 
-    destDir = Path(DEST_DIR).resolve()
-    destDir.mkdir(parents=True, exist_ok=True)
+    destDirPath = Path(destDir).resolve()
+    destDirPath.mkdir(parents=True, exist_ok=True)
 
-    srcDir = Path(SRC_DIR).resolve()
+    srcDirPath = Path(srcDir).resolve()
 
     # Loop through all markdown files in the source directory
-    for filePath in Path(srcDir).rglob('*.md'):
-        relativePath = filePath.relative_to(srcDir)
-        dest_path = destDir / relativePath
+    for filePath in Path(srcDirPath).rglob('*.md'):
+        relativePath = filePath.relative_to(srcDirPath)
+        destAndRelativePath = destDirPath / relativePath
         errors = []
         isDraft = False
 
@@ -62,15 +62,15 @@ def parseMarkdownFiles(SRC_DIR, DEST_DIR, skipValidateDynamicLinks):
             content = f.read()
 
         content, linkErrors = updateDynamicLinks(filePath, content, skipValidateDynamicLinks)
-        imageErrors = copyImages(content, srcDir, destDir)
+        imageErrors = copyImages(content, srcDirPath, destDirPath)
         existingTags = extractHeaderValues(content, 'tags')
         taxonomie = extractHeaderValues(content, 'taxonomie')
         newTags, tagErrors = generateTags(taxonomie, filePath, existingTags)
         difficulty = extractHeaderValues(content, 'difficulty')
-        toDoItems = findWIPItems(content)
+        todoItems = findWIPItems(content)
 
-        if(toDoItems):
-            errors.append(ERROR_WIP_FOUND + "<br>" + '<br>'.join([f"{item}" for item in toDoItems]))
+        if(todoItems):
+            errors.append(ERROR_WIP_FOUND + "<br>" + '<br>'.join([f"{item}" for item in todoItems]))
 
         # Combine all errors
         errors = linkErrors + imageErrors + tagErrors + errors
@@ -81,14 +81,14 @@ def parseMarkdownFiles(SRC_DIR, DEST_DIR, skipValidateDynamicLinks):
 
         # Don't include deprecated files in the report
         if("deprecated" not in str(filePath)):
-            appendFileToSpecificList(errors, toDoItems, filePath, srcDir, taxonomie, newTags)
+            appendFileToSpecificList(errors, todoItems, filePath, srcDirPath, taxonomie, newTags)
         
-        saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, content, dest_path)
+        saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, content, destAndRelativePath)
 
 # Fill the lists used for the report
-def appendFileToSpecificList(errors, toDoItems, filePath, srcDir, taxonomie, tags):
+def appendFileToSpecificList(errors, todoItems, filePath, srcDir, taxonomie, tags):
     if errors:
-        if(toDoItems):
+        if(todoItems):
             WIPFiles.append(createFileReportRow(TODO_ITEMS, filePath, srcDir, taxonomie, tags, errors))
         elif(ERROR_MISSING_TAXCO in errors): 
             failedFiles.append(createFileReportRow(FAIL_CROSS, filePath, srcDir, taxonomie, tags, errors))
@@ -102,25 +102,25 @@ def appendFileToSpecificList(errors, toDoItems, filePath, srcDir, taxonomie, tag
         parsedFiles.append(createFileReportRow(SUCCESS, filePath, srcDir, taxonomie, tags, errors))
 
 # Combines everything into a new file
-def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, content, dest_path):
-    new_content = (
+def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, content, destPath):
+    newContent = (
         f"---\ntitle: {filePath.stem}\ntaxonomie: {taxonomie}\ntags:\n" +
         '\n'.join([f"- {tag}" for tag in tags]) +
         "\n"
     )
 
     if difficulty:
-        new_content += "difficulty: " + ''.join([f"{level}" for level in difficulty]) + "\n"
+        newContent += "difficulty: " + ''.join([f"{level}" for level in difficulty]) + "\n"
         
     if isDraft:
-        new_content += "draft: true \n"
+        newContent += "draft: true \n"
 
-    new_content += "---" + content.split('---', 2)[-1]
+    newContent += "---" + content.split('---', 2)[-1]
 
-    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    destPath.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(dest_path, 'w', encoding='utf-8') as f:
-        f.write(new_content)
+    with open(destPath, 'w', encoding='utf-8') as f:
+        f.write(newContent)
 
     if VERBOSE:
         print(f"File completed: {filePath}")

@@ -1,7 +1,7 @@
 import { Probot } from "probot";
 import { isAppCommit } from "./helpers.js";
-import { preCompile } from "./pre_compile.js";
-import { mainCompile } from "./main_compile.js";
+import { preCompile } from "./preCompile.js";
+import { mainCompile } from "./mainCompile.js";
 
 export default (app: Probot) => {
 	// Main compile

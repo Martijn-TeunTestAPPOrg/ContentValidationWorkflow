@@ -1,7 +1,7 @@
-import * as fs from "fs";
 import path from "path";
+import * as fs from "fs";
+import { SimpleGit } from "simple-git";
 import { Probot, Context } from "probot";
-import simpleGit from "simple-git";
 
 
 // Helper function to check if the commit is from our app
@@ -12,6 +12,31 @@ export function isAppCommit(context: Context<'push'>) {
     // Check both the sender and the commit message
     return (sender && sender.type === 'Bot' && sender.login.endsWith('[bot]')) ||
            commits.some(commit => commit.message.includes('[bot-commit]'));
+}
+
+// Helper function to get default configuration values
+export function getDefaultConfig(context: Context<any>) {
+    const gitAppName = process.env.GITHUB_APP_NAME || '';
+    const gitAppEmail = process.env.GITHUB_APP_EMAIL || '';
+
+    const payload = context.payload;
+    const repoOwner = payload.repository.owner.login;
+    const repoName = payload.repository.name;
+    const repoUrl = payload.repository.clone_url;  
+
+    const clonedRepoFolder = process.env.CLONE_REPO_FOLDER || 'src/cloned_repo';
+    const tempStorageFolder = process.env.TEMP_STORAGE_FOLDER || 'src/temp_storage';
+    const reportFiles = process.env.REPORT_FILES?.split(',') || [];
+
+    const __dirname = process.cwd();
+    const cloneTargetDirectory = path.join(__dirname, clonedRepoFolder);
+    const cloneBuildDirectory = path.join(cloneTargetDirectory, 'build');
+
+    const sourceBuildDirectory = path.join(__dirname, clonedRepoFolder, 'build');
+    const tempDestinationBuildDir = path.join(__dirname, tempStorageFolder, 'build');
+    const tempStorageDirectory = path.join(__dirname, tempStorageFolder);
+
+    return { gitAppName, gitAppEmail, repoOwner, repoName, repoUrl, clonedRepoFolder, reportFiles, cloneTargetDirectory, cloneBuildDirectory, sourceBuildDirectory, tempDestinationBuildDir, tempStorageDirectory };
 }
 
 // Helper function to get the installation token
@@ -29,8 +54,27 @@ export const getInstallationToken = async (app: Probot, context: Context<any>) =
     return token;
 }
 
+// Helper function to clear temp storage
+export function clearTempStorage(cloneTargetDirectory: string, tempStorageDirectory: string, app: Probot, context: Context<any>) {
+    try {
+        // Remove the cloned_repo folder if it exists
+        if (fs.existsSync(cloneTargetDirectory)) {
+            deleteFolderRecursiveSync(app, cloneTargetDirectory);
+        }
+        fs.mkdirSync(cloneTargetDirectory);
+        // Remove the cloned_repo folder if it exists
+        if (fs.existsSync(tempStorageDirectory)) {
+            deleteFolderRecursiveSync(app, tempStorageDirectory);
+        }
+        fs.mkdirSync(tempStorageDirectory);
+    } catch (error: any) {
+        context.log.error(`Failed to remove temp folders: ${error.message}`);
+        throw error;
+    }
+}
+
 // Helper function to configure git
-export const configureGit = async (git: simpleGit.SimpleGit, gitAppName: string, gitAppEmail: string) => {
+export const configureGit = async (git: SimpleGit, gitAppName: string, gitAppEmail: string) => {
     if (!gitAppName || !gitAppEmail) {
         throw new Error('Git app name or email not configured in environment variables');
     }

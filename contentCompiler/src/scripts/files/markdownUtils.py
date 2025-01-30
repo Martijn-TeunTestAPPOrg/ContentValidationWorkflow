@@ -94,16 +94,6 @@ def generateTags(taxonomies, filePath, existingTags):
                             splittedRow2 =  row[TC2_COL].split(',')
                             if splittedRow2[int(tc2)-1] == "X": 
                                tags.append(NOT_NECESSARY)
-                            
-                            # Checks if the fourth path has the matching 4C/ID component (looking at the folder and taxonomie code)
-                            containsCorrectTaxcos = checkIfFileContainsWrong4cid(taxonomies, filePath)
-                            if containsCorrectTaxcos:
-                                updateProcessReportData(tc1, tc2)
-                                updateSubjectReportData(getFileType(filePath), tc1, tc2, tc3)   
-                            else:   
-                                errors.append(ERROR_TAXCO_IN_WRONG_4CID_COMPONENT + ' `' + taxonomie + '` ')                        
-
-                            taxonomieTags = sorted(list(set(taxonomies)))
 
         # If no tags were found, add an error
             if NOT_NECESSARY in tags: 
@@ -170,17 +160,3 @@ def findWIPItems(content):
     # Find all the todo items in the content
     todoItems = re.findall(TODO_PATTERN, content)
     return todoItems
-
-# Checks if a file contains at least one wrong taxonomie code (based on incorrect placement of 4C/ID)
-def checkIfFileContainsWrong4cid(taxonomies, filePath):
-    containsOnlyCorrectTaxonomie = True
-    for taxonomie in taxonomies:
-        if not re.match(TAXONOMIE_PATTERN, taxonomie):
-            continue
-        tc1, tc2, tc3, tc4 = splitTaxonomie(taxonomie)  
-        if tc1 and tc2 and tc3:
-            if tc4 in FOLDERS_FOR_4CID:
-                expectedFolder = FOLDERS_FOR_4CID[tc4]
-                if expectedFolder not in str(filePath):
-                    containsOnlyCorrectTaxonomie = False
-    return containsOnlyCorrectTaxonomie            

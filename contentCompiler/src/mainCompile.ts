@@ -8,7 +8,7 @@ import { getDefaultConfig, clearTempStorage, deleteFolderRecursiveSync, getInsta
 
 export const mainCompile = async (app: Probot, context: Context<'push'>) => {
     const __dirname = process.cwd();
-    const { gitAppName, gitAppEmail, repoOwner, repoName, repoUrl, clonedRepoFolder, reportFiles, cloneTargetDirectory, cloneBuildDirectory, sourceBuildDirectory, tempDestinationBuildDir, tempStorageDirectory } = getDefaultConfig(context);
+    const { gitAppName, gitAppEmail, repoOwner, repoName, repoUrl, clonedRepoFolder, reportFiles, cloneTargetDirectory, cloneBuildDirectory, sourceBuildDirectory, tempDestinationBuildDir, tempStorageDirectory, datasetRepoUrl, datasetFolder } = getDefaultConfig(context);
     
     context.log.info(`Push event received for ${repoOwner}/${repoName}`);
 
@@ -23,7 +23,24 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
     // Step 2: Remove the temp folders
     clearTempStorage(cloneTargetDirectory, tempStorageDirectory, app, context);
 
-    // Step 3: Clone the repository
+    // Step 3: Clone the dataset
+    try {
+        context.log.info(`Cloning dataset...`);
+
+        // Remove the dataset folder if it exists
+        if (fs.existsSync(datasetFolder)) {
+            deleteFolderRecursiveSync(app, datasetFolder);
+        }
+
+        await git.clone(datasetRepoUrl, datasetFolder);
+        context.log.info(`Dataset cloned successfully to ${cloneTargetDirectory}`);
+    }
+    catch (error: any) {
+        context.log.error(`Failed to clone dataset: ${error.message}`);
+        throw error;
+    }
+
+    // Step 4: Clone the repository
     try {
         context.log.info(`Cloning repository ${repoName} from ${repoUrl}...`);
 
@@ -39,7 +56,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 4: Checkout to the 'content' branch
+    // Step 5: Checkout to the 'content' branch
     try {
         context.log.info(`Checking out to the 'content' branch...`);
         await git.cwd(cloneTargetDirectory).checkout("content");
@@ -51,7 +68,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 5: Compile the content
+    // Step 6: Compile the content
     await new Promise<void>((resolve, reject) => {
         context.log.info(`Compiling content...`);
         const pythonProcess = exec('python src/scripts/compile_content.py');
@@ -82,7 +99,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         });
     });
 
-    // Step 6: Copy the reports to the storage folder
+    // Step 7: Copy the reports to the storage folder
     try {
         context.log.info(`Copying reports to the storage folder...`);
         
@@ -96,7 +113,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 7: Move build to temp_storage
+    // Step 8: Move build to temp_storage
     try {
         context.log.info(`Copying build to the storage folder...`);
 
@@ -119,7 +136,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 8: Commit and push reports to the 'content' branch
+    // Step 9: Commit and push reports to the 'content' branch
     try {
         context.log.info(`Committing and pushing reports to the 'content' branch...`);
         await configureGit(git, gitAppName, gitAppEmail); // Configure git before committing
@@ -142,7 +159,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 9: Remove everything from cloned_repo
+    // Step 10: Remove everything from cloned_repo
     try {
         context.log.info(`Removing cloned repository ${repoName}...`);
         deleteFolderRecursiveSync(app, cloneTargetDirectory);
@@ -153,7 +170,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
 
     git = simpleGit({ baseDir: process.cwd() });
 
-    // Step 10: Clone the repository
+    // Step 11: Clone the repository
     try {
         context.log.info(`Cloning repository ${repoName} from ${repoUrl}...`);
 
@@ -169,7 +186,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
 
     git = simpleGit({ baseDir: cloneTargetDirectory });
     
-    // Step 11: Check out to the 'staging' branch
+    // Step 12: Check out to the 'staging' branch
     try {
         context.log.info(`Checking out to the 'staging' branch...`);
         await git.cwd(cloneTargetDirectory).checkout("staging");
@@ -178,7 +195,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 12: Pull the latest changes from the 'staging' branch
+    // Step 13: Pull the latest changes from the 'staging' branch
     try {
         context.log.info(`Pulling the latest changes from the 'staging' branch...`);
         await git.pull('origin', 'staging');
@@ -187,7 +204,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 13: Remove the build directory from the 'staging' branch
+    // Step 14: Remove the build directory from the 'staging' branch
     try {
         context.log.info('Removing the build directory from the staging branch...');
 
@@ -200,7 +217,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 14: Remove the reports from the 'staging' branch
+    // Step 15: Remove the reports from the 'staging' branch
     try {
         context.log.info('Removing the reports from the staging branch...');
         
@@ -218,7 +235,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 15: Sync the compiled files and reports to the 'staging' branch
+    // Step 16: Sync the compiled files and reports to the 'staging' branch
     try {
         // Copy the build directory to the repo root
         context.log.info('Copying build to the repository root...');
@@ -237,7 +254,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 16: Copy the reports to the staging branch
+    // Step 17: Copy the reports to the staging branch
     try {
         context.log.info(`Copying reports to the repository root...`);
         
@@ -251,7 +268,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 17: Commit and push the compiled files and reports to the 'staging' branch
+    // Step 18: Commit and push the compiled files and reports to the 'staging' branch
     try {
         context.log.info('Committing and pushing compiled files and reports to the staging branch...');
         await configureGit(git, gitAppName, gitAppEmail);
@@ -276,7 +293,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 18: Remove the cloned repo directory
+    // Step 19: Remove the cloned repo directory
     try {
         context.log.info('Removing the cloned repo directory...');
         deleteFolderRecursiveSync(app, cloneTargetDirectory);
@@ -285,7 +302,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
-    // Step 19: Remove the temp storage folder
+    // Step 20: Remove the temp storage folder
     try {
         context.log.info('Removing the temp storage folder...');
         deleteFolderRecursiveSync(app, tempStorageDirectory);

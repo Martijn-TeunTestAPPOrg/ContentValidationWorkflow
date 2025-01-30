@@ -24,8 +24,10 @@ export function getDefaultConfig(context: Context<any>) {
     const repoName = payload.repository.name;
     const repoUrl = payload.repository.clone_url;  
 
+    const datasetRepoUrl = process.env.DATASET_REPO_URL || '';
     const clonedRepoFolder = process.env.CLONE_REPO_FOLDER || 'src/cloned_repo';
     const tempStorageFolder = process.env.TEMP_STORAGE_FOLDER || 'src/temp_storage';
+    const datasetFolder = process.env.DATASET_FOLDER || 'src/dataset';
     const reportFiles = process.env.REPORT_FILES?.split(',') || [];
 
     const __dirname = process.cwd();
@@ -36,7 +38,7 @@ export function getDefaultConfig(context: Context<any>) {
     const tempDestinationBuildDir = path.join(__dirname, tempStorageFolder, 'build');
     const tempStorageDirectory = path.join(__dirname, tempStorageFolder);
 
-    return { gitAppName, gitAppEmail, repoOwner, repoName, repoUrl, clonedRepoFolder, reportFiles, cloneTargetDirectory, cloneBuildDirectory, sourceBuildDirectory, tempDestinationBuildDir, tempStorageDirectory };
+    return { gitAppName, gitAppEmail, repoOwner, repoName, repoUrl, clonedRepoFolder, reportFiles, cloneTargetDirectory, cloneBuildDirectory, sourceBuildDirectory, tempDestinationBuildDir, tempStorageDirectory, datasetRepoUrl, datasetFolder };
 }
 
 // Helper function to get the installation token

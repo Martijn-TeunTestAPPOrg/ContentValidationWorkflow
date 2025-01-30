@@ -7,7 +7,7 @@ import { getDefaultConfig, getInstallationToken, configureGit, clearTempStorage,
 
 
 export const preCompile = async (app: Probot, context: Context<'pull_request'>) => {
-    const { gitAppName, gitAppEmail, repoOwner, repoName, repoUrl, clonedRepoFolder, cloneTargetDirectory, tempStorageDirectory } = getDefaultConfig(context);
+    const { gitAppName, gitAppEmail, repoOwner, repoName, repoUrl, clonedRepoFolder, cloneTargetDirectory, tempStorageDirectory, datasetRepoUrl, datasetFolder } = getDefaultConfig(context);
     
     const payload = context.payload;
     const prNumber = payload.number;
@@ -32,8 +32,25 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
 
     // Step 1: Remove the temp folders
     clearTempStorage(cloneTargetDirectory, tempStorageDirectory, app, context);
+
+    // Step 2: Clone the dataset
+    try {
+        context.log.info(`Cloning dataset...`);
+
+        // Remove the dataset folder if it exists
+        if (fs.existsSync(datasetFolder)) {
+            deleteFolderRecursiveSync(app, datasetFolder);
+        }
+
+        await git.clone(datasetRepoUrl, datasetFolder);
+        context.log.info(`Dataset cloned successfully to ${cloneTargetDirectory}`);
+    }
+    catch (error: any) {
+        context.log.error(`Failed to clone dataset: ${error.message}`);
+        throw error;
+    }
     
-    // Step 2: Clone the repository
+    // Step 3: Clone the repository
     try {
         context.log.info(`Cloning repository ${remoteUrl} into ${cloneTargetDirectory}`);
         await git.clone(repoUrl, clonedRepoFolder);
@@ -42,7 +59,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         throw error;
     }
     
-    // Step 3: Checkout the source branch
+    // Step 4: Checkout the source branch
     try {
         context.log.info(`Checking out source branch ${headBranch}`);
         await git.cwd(cloneTargetDirectory).checkout(headBranch);
@@ -51,7 +68,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         throw error;
     }
 
-    // Step 4: Get files changed in the PR
+    // Step 5: Get files changed in the PR
     try {        
         // Fetch both branches to ensure we have the latest
         await git.cwd(cloneTargetDirectory).fetch(['origin', baseBranch]);
@@ -94,7 +111,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         throw error;
     }
 
-    // Step 5: Check for illegal changed files
+    // Step 6: Check for illegal changed files
     illegalChangedFiles = changedFiles
         .map((file: any) => file.filename + ' (' + file.status + ')')
         .filter((filename: any) => !filename.startsWith('content/'));
@@ -119,7 +136,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         // return; // TODO: Remove the comment, this is so the rest of the code is executed. In prod this should be enabled.
     }
 
-    // Step 6: Check if there are unmerged files
+    // Step 7: Check if there are unmerged files
     if (changedFiles.some(file => file.status === 'unmerged')) {
         context.log.error('Unmerged files found: ');
         console.log(changedFiles);
@@ -140,7 +157,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         // return; // TODO: Remove the comment, this is so the rest of the code is executed. In prod this should be enabled.
     }
 
-    // Step 7: Copy the changed files to temp
+    // Step 8 Copy the changed files to temp
     try {
         context.log.info(`Copying changed files to temp storage folder ${tempStorageDirectory}`);
 
@@ -168,7 +185,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         throw error;
     }
     
-    // Step 8: Remove the cloned repo folder
+    // Step 9: Remove the cloned repo folder
     try {
         context.log.info('Removing the cloned repo directory...');
         deleteFolderRecursiveSync(app, cloneTargetDirectory);
@@ -177,7 +194,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         throw error;
     }
 
-    // Step 9: Move the temp storage folder to the cloned repo folder
+    // Step 10: Move the temp storage folder to the cloned repo folder
     try {
         context.log.info('Moving the temp storage folder to the cloned repo folder...');
         fs.renameSync(tempStorageDirectory, cloneTargetDirectory);
@@ -186,7 +203,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         throw error;
     }
 
-    // Step 10: Compile the content
+    // Step 11: Compile the content
     await new Promise<void>((resolve, reject) => {
         context.log.info(`Compiling content...`);
         exec('python src/scripts/compile_content.py --skip-link-check', (error: any, stdout: any) => {
@@ -200,7 +217,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         });
     });
 
-    // Step 11: Hide previous bot comments before posting a new one
+    // Step 12: Hide previous bot comments before posting a new one
     try {
         context.log.info('Fetching all reviews on the PR...');
         const reviews = await context.octokit.pulls.listReviews({
@@ -241,7 +258,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         }
     }
 
-    // Step 12: Create a review with the compiled content
+    // Step 13: Create a review with the compiled content
     try {
         // Read the content report file
         const reportPath = path.join(cloneTargetDirectory, 'content_report.md');
@@ -260,7 +277,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         throw error;
     }
 
-    // Step 13: Delete the cloned repository
+    // Step 14: Delete the cloned repository
     try {
         deleteFolderRecursiveSync(app, clonedRepoFolder);
     } catch (error) {

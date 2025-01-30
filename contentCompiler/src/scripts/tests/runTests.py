@@ -34,7 +34,7 @@ def validateDraft():
     expectedAmountOfDraftFiles = len(failedFiles)
     actualAmountOfDraftFiles = 0
     for file in failedFiles:
-        fullPath = "./.github/script/tests/test_cases_build/" + file['path']
+        fullPath = "src/scripts/tests/test_cases_build/" + file['path']
         try:
             with open(fullPath, 'r', encoding='utf-8') as file:
                 for line in file:
@@ -56,10 +56,10 @@ def test():
 
     SRC_DIR = Path(__file__).resolve().parents[0] / 'test_cases'
     DEST_DIR = Path(__file__).resolve().parents[0] / 'test_cases_build'
-    DATASET = Path(__file__).resolve().parents[2] / 'datasets/test_dataset.xlsx'
-    REPORT_PATH = "./.github/script/report/actual_test_report.md"
-    TAXCO_REPORT_PATH = "./.github/script/tests/reports/actual_taxco_test_report.md"
-    CONTENT_REPORT_PATH = "./.github/script/tests/reports/actual_content_test_report.md"
+    DATASET = Path(__file__).resolve().parents[0] / 'test_dataset.xlsx'
+    REPORT_PATH = "src/scripts/report/actual_test_report.md"
+    TAXCO_REPORT_PATH = "src/scripts/tests/reports/actual_taxco_test_report.md"
+    CONTENT_REPORT_PATH = "src/scripts/tests/reports/actual_content_test_report.md"
 
     if not os.path.exists(DATASET):
         print(f"Dataset file {DATASET} not found.")

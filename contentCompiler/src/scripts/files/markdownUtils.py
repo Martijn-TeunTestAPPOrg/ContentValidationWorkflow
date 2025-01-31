@@ -6,12 +6,11 @@ from pathlib import Path
 from config import failedFiles, dataset, report2, WIPFiles
 
 # Constants
-from config import PROCES_COL, PROCESSTAP_COL, TC3_COL, TC2_COL, TAXONOMIE_PATTERN, TODO_PATTERN, FOLDERS_FOR_4CID, VERBOSE, ERROR_INVALID_TAXCO
-from config import ERROR_MISSING_TAXCO, NOT_NECESSARY, ERROR_TAXCO_NOT_NEEDED, ERROR_TAXCO_NOT_FOUND, ERROR_TAXCO_IN_WRONG_4CID_COMPONENT
+from config import PROCES_COL, PROCESSTAP_COL, TC3_COL, TC2_COL, TAXONOMIE_PATTERN, TODO_PATTERN, VERBOSE, ERROR_INVALID_TAXCO
+from config import ERROR_MISSING_TAXCO, NOT_NECESSARY, ERROR_TAXCO_NOT_FOUND
 
 # Functions
 from report.table import generateMarkdownTable
-from report.update import updateProcessReportData, updateSubjectReportData
 
 
 # Create a new row in the file report based on the status, file path, taxonomie, and tags.
@@ -95,10 +94,7 @@ def generateTags(taxonomies, filePath, existingTags):
                             if splittedRow2[int(tc2)-1] == "X": 
                                tags.append(NOT_NECESSARY)
 
-        # If no tags were found, add an error
-            if NOT_NECESSARY in tags: 
-                tags.remove(NOT_NECESSARY)
-                errors.append(ERROR_TAXCO_NOT_NEEDED + ' `' + taxonomie + '` ')   
+            # If no tags were found, add an error
             if tags == [] and not errors:
                 errors.append(ERROR_TAXCO_NOT_FOUND + ' `' + taxonomie + '` ')   
                 if VERBOSE: print(ERROR_TAXCO_NOT_FOUND + taxonomie)

@@ -2,7 +2,7 @@
 from config import VERBOSE, WIPFiles, failedFiles, failedImages, parsedFiles
 
 # Functions
-from contentCompiler.src.scripts.files.markdownUtils import formatFileReportTable
+from files.markdownUtils import formatFileReportTable
 from files.images import formatImageReportTable
 
 """

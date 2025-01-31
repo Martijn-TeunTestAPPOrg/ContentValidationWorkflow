@@ -7,12 +7,12 @@ import pandas as pd
 from config import failedFiles, parsedFiles, WIPFiles, dataset
 
 # Constants
-from config import ERROR_MISSING_TAXCO, FAIL_CROSS, NOT_NEEDED, WARNING, SUCCESS, TODO_ITEMS, IGNORE_FOLDERS, VERBOSE, ERROR_TAXCO_NOT_NEEDED, ERROR_WIP_FOUND
+from config import ERROR_MISSING_TAXCO, FAIL_CROSS, NOT_NEEDED, WARNING, SUCCESS, TODO_ITEMS, IGNORE_FOLDERS, VERBOSE, ERROR_WIP_FOUND
 
 # Functions
 from files.images import copyImages
 from files.links import updateDynamicLinks
-from contentCompiler.src.scripts.files.markdownUtils import extractHeaderValues, generateTags, createFileReportRow, findWIPItems
+from files.markdownUtils import extractHeaderValues, generateTags, createFileReportRow, findWIPItems
 from files.dataset import checkRowEmpty
 
 
@@ -92,8 +92,6 @@ def appendFileToSpecificList(errors, todoItems, filePath, srcDir, taxonomie, tag
             WIPFiles.append(createFileReportRow(TODO_ITEMS, filePath, srcDir, taxonomie, tags, errors))
         elif(ERROR_MISSING_TAXCO in errors): 
             failedFiles.append(createFileReportRow(FAIL_CROSS, filePath, srcDir, taxonomie, tags, errors))
-        elif any(ERROR_TAXCO_NOT_NEEDED in error for error in errors):
-            failedFiles.append(createFileReportRow(NOT_NEEDED, filePath, srcDir, taxonomie, tags, errors))
         else: 
             failedFiles.append(createFileReportRow(WARNING, filePath, srcDir, taxonomie, tags, errors))
 

@@ -47,17 +47,15 @@ DT_COL = 10
 # Error message for not including any taxonomy code
 ERROR_INVALID_TAXCO = "Ongeldige taxonomiecode: "
 ERROR_MISSING_TAXCO = "Geen taxonomiecode gevonden."
-ERROR_TAXCO_NOT_NEEDED = "Taxonomiecode gebruikt wanneer niet nodig: "
 ERROR_TAXCO_NOT_FOUND = "Taxonomie niet gevonden in dataset: "
 ERROR_TAXCO_IN_WRONG_4CID_COMPONENT = "4C/ID-component van taxonomie komt niet overeen met 4C/ID-map: "
 
 # Error message for images
 ERROR_IMAGE_NOT_FOUND = "Afbeelding niet gevonden: "
 ERROR_IMAGE_NOT_USED = "Afbeelding wordt in geen enkel bestand gebruikt"
-ERROR_NO_4CID_COMPONENT = "Afbeelding bevat geen 4C/ID-component."
 
 # Error message for dynamic links
-ERROR_INVALID_DYNAMIC_LINK = "Ongeldige dynamische link: "
+ERROR_INVALID_DYNAMIC_LINK = "Dynamische link fout: "
 
 # WIP errors
 ERROR_WIP_FOUND = "Work-in-progress items gevonden: "

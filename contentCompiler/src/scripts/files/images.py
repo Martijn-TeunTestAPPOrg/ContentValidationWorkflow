@@ -6,7 +6,7 @@ from pathlib import Path
 from config import failedImages
 
 # Constants
-from config import FAIL_CROSS, NOT_NECESSARY, IGNORE_FOLDERS, ERROR_IMAGE_NOT_USED, ERROR_NO_4CID_COMPONENT, ERROR_IMAGE_NOT_FOUND
+from config import NOT_NECESSARY, IGNORE_FOLDERS, ERROR_IMAGE_NOT_USED, ERROR_IMAGE_NOT_FOUND
 
 # Functions
 from report.table import generateMarkdownTable
@@ -90,10 +90,6 @@ def fillFailedImages(srcDir, destDir):
     
     srcImages = getImagesInFolder(srcDirPath)
     destImages = getImagesInFolder(destDirPath)
-    
-    for image in destImages:
-        if not str(image.stem).startswith(("PI", "OI", "LT", "DT")):
-            failedImages.append(createImageTableTow(FAIL_CROSS, image, destDirPath, ERROR_NO_4CID_COMPONENT))
 
     for image in srcImages: 
         if str(image.stem) not in {str(img.stem) for img in destImages}:

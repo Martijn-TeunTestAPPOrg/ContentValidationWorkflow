@@ -1,9 +1,7 @@
 # Variables
 from config import VERBOSE, taxcoReport, contentReport
-
 # Constants
 from config import LT, DT, OI, PI, FAIL_CIRCLE, SUCCESS, NOT_NECESSARY
-
 # Functions
 from report.table import generateMarkdownTable
 

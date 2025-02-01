@@ -1,6 +1,5 @@
 # Variables
 from config import VERBOSE, WIPFiles, failedFiles, failedImages, parsedFiles, SUCCESS, WARNING
-
 # Functions
 from report.table import formatFileReportTable, formatImageReportTable
 

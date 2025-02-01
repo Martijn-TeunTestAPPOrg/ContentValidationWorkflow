@@ -1,9 +1,7 @@
 # Imports
 from pathlib import Path
-
 # Variables
 from config import dataset, taxcoReport, contentReport
-
 # Constants
 from config import TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, NOT_NECESSARY, LT_COL, DT_COL, OI_COL, PI_COL, LT, DT, OI, PI
 

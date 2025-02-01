@@ -1,45 +1,15 @@
 # Imports
 import re
-from pathlib import Path
 
 # Variables
-from config import failedFiles, dataset, report2, WIPFiles
+from config import dataset, contentReport
 
 # Constants
 from config import PROCES_COL, PROCESSTAP_COL, TC3_COL, TC2_COL, TAXONOMIE_PATTERN, TODO_PATTERN, VERBOSE, ERROR_INVALID_TAXCO
 from config import ERROR_MISSING_TAXCO, NOT_NECESSARY, ERROR_TAXCO_NOT_FOUND
 
 # Functions
-from report.table import generateMarkdownTable
-
-
-# Create a new row in the file report based on the status, file path, taxonomie, and tags.
-def createFileReportRow(status, filePath, srcDir, taxonomie, tags, errors):
-    return {
-        "status": status,
-        "file": filePath.stem,
-        "path": str(filePath.relative_to(srcDir)),
-        "taxonomie": '<br>'.join(taxonomie) if taxonomie else "N/A",
-        "tags": '<br>'.join(tags) if tags else "N/A",
-        "errors": '<br>'.join(errors) if errors else "N/A"
-    }
-
-# Format the success or failed report table based on a list.
-def formatFileReportTable(fileReport):
-    headers = ["Status", "File", "Path", "Taxonomie", "Tags", "Errors"]
-
-    if fileReport == failedFiles or fileReport == WIPFiles : headers.append("Errors")
-    rows = [[
-        file['status'], 
-        file['file'], 
-        file['path'], 
-        file['taxonomie'], 
-        file['tags'],
-        file['errors']
-     ] for file in fileReport]
-
-    table = generateMarkdownTable(headers, rows)
-    return table
+from report.generateTaxcoReport import updateProcessReportData, updateSubjectReportData
 
 """
 Generate tags based on the taxonomie values
@@ -47,7 +17,7 @@ Args:
     taxonomies (list): List of taxonomie values.
     filePath (str): Path to the file.
 """
-def generateTags(taxonomies, filePath, existingTags):
+def generateTags(taxonomies, existingTags):
     tags = []
     errors = []
     combinedTags = []
@@ -71,7 +41,7 @@ def generateTags(taxonomies, filePath, existingTags):
                     # Check if the first part of the taxonomie is equal to the second column (TC1) in the dataset
                     if row[1] == tc1:
                         # Check if the second part of the taxonomie is equal to the third column (TC2) in the dataset
-                        if row[5] in report2 and row[5] == tc3:
+                        if row[5] in contentReport and row[5] == tc3:
                             # Adds the taxonomie
                             newTag = "HBO-i/niveau-" + tc2
                             if newTag not in tags:
@@ -90,9 +60,18 @@ def generateTags(taxonomies, filePath, existingTags):
                                 tags.append(row[TC3_COL])
 
                             # Check if the taxonomie is not needed
-                            splittedRow2 =  row[TC2_COL].split(',')
-                            if splittedRow2[int(tc2)-1] == "X": 
+                            splittedRow =  row[TC2_COL].split(',')
+                            if splittedRow[int(tc2)-1] == "X": 
                                tags.append(NOT_NECESSARY)
+
+
+                            # Update the process report data with the new values
+                            # This is needed so the report has the correct data
+                            # Before the script runs it pre-fills the report with all the taxonomies
+                            # This is done so the report has all the taxonomies even if they are not used
+                            # After this the report is updated with the correct data
+                            updateProcessReportData(tc1, tc2)
+                            updateSubjectReportData(tc4, tc1, tc2, tc3)
 
             # If no tags were found, add an error
             if tags == [] and not errors:
@@ -111,20 +90,6 @@ def generateTags(taxonomies, filePath, existingTags):
     combinedTags = sorted(combinedTags, key=lambda tag: (not tag.startswith("HBO-i/niveau-"), tag))
 
     return list(dict.fromkeys(combinedTags)), errors
-
-# Returns the folder name after the 'content' directory in the path.
-def getFileType(filePath):
-    # Convert to Path object if not already
-    filePath = Path(filePath)
-    # Find the 'content' directory in the path
-    folderPath = filePath
-
-    while folderPath.parent.name != 'content' and folderPath.parent.name != 'test_cases':
-        folderPath = folderPath.parent
-    if not folderPath.name.endswith('.md') :
-        cleanedFolderName = re.sub(r'^\d+\.\s*', '', folderPath.name)
-        return cleanedFolderName
-    return None
 
 def splitTaxonomie(taxonomie):
     return taxonomie.split('.')
@@ -153,6 +118,4 @@ def extractHeaderValues(content, fieldName):
 
 # Helper function to find all the To-Do items in the content of a markdown file.	
 def findWIPItems(content):
-    # Find all the todo items in the content
-    todoItems = re.findall(TODO_PATTERN, content)
-    return todoItems
+    return re.findall(TODO_PATTERN, content)

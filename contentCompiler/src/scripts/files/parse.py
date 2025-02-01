@@ -1,40 +1,16 @@
 # Imports
-import csv
 from pathlib import Path
-import pandas as pd
-
 # Variables
-from config import failedFiles, parsedFiles, WIPFiles, dataset
-
+from config import failedFiles, parsedFiles, WIPFiles
 # Constants
-from config import ERROR_MISSING_TAXCO, FAIL_CROSS, NOT_NEEDED, WARNING, SUCCESS, TODO_ITEMS, IGNORE_FOLDERS, VERBOSE, ERROR_WIP_FOUND
-
+from config import ERROR_MISSING_TAXCO, FAIL_CROSS, WARNING, SUCCESS, TODO_ITEMS, IGNORE_FOLDERS, VERBOSE, ERROR_WIP_FOUND
 # Functions
 from files.images import copyImages
 from files.links import updateDynamicLinks
-from files.markdownUtils import extractHeaderValues, generateTags, createFileReportRow, findWIPItems
-from files.dataset import checkRowEmpty
+from files.markdownUtils import extractHeaderValues, generateTags, findWIPItems
+from report.table import createFileReportRow
 
-
-# Parse the dataset file from a XLSX file to a list.
-def parseDatasetFile(datasetFile):
-    global dataset
-    try:
-        df = pd.read_excel(datasetFile)
-        csvData = df.to_csv(index=False, sep=';')
-        reader = csv.reader(csvData.splitlines(), delimiter=';', quotechar='|')
-        dataset.extend(list(reader))
-        for row in dataset[1:]:
-            if checkRowEmpty(row): 
-                dataset.remove(row)
-    except FileNotFoundError:
-        print(f"File {datasetFile} not found.")
-        exit(404)
-    except Exception as e:
-        print(f"An error occurred while reading the dataset file: {e}")
-        exit(404)
-
-# Update markdown files in the source directory with taxonomie tags and generate reports.
+# Update markdown files in the source directory
 def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
     if VERBOSE: print("Parsing markdown files...")
 
@@ -65,7 +41,7 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
         imageErrors = copyImages(content, srcDirPath, destDirPath)
         existingTags = extractHeaderValues(content, 'tags')
         taxonomie = extractHeaderValues(content, 'taxonomie')
-        newTags, tagErrors = generateTags(taxonomie, filePath, existingTags)
+        newTags, tagErrors = generateTags(taxonomie, existingTags)
         difficulty = extractHeaderValues(content, 'difficulty')
         todoItems = findWIPItems(content)
 
@@ -79,15 +55,13 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
         if(errors):
             isDraft = True
 
-        # Don't include deprecated files in the report
-        if("deprecated" not in str(filePath)):
-            appendFileToSpecificList(errors, todoItems, filePath, srcDirPath, taxonomie, newTags)
-        
+        appendFileToSpecificList(errors, todoItems, filePath, srcDirPath, taxonomie, newTags)
         saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, content, destAndRelativePath)
 
-# Fill the lists used for the report
+# Fill the different lists used for the report
 def appendFileToSpecificList(errors, todoItems, filePath, srcDir, taxonomie, tags):
     if errors:
+        # Based on the type of error, add the file to the correct list
         if(todoItems):
             WIPFiles.append(createFileReportRow(TODO_ITEMS, filePath, srcDir, taxonomie, tags, errors))
         elif(ERROR_MISSING_TAXCO in errors): 
@@ -99,7 +73,7 @@ def appendFileToSpecificList(errors, todoItems, filePath, srcDir, taxonomie, tag
     else:
         parsedFiles.append(createFileReportRow(SUCCESS, filePath, srcDir, taxonomie, tags, errors))
 
-# Combines everything into a new file
+# Combines everything into a new md file
 def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, content, destPath):
     newContent = (
         f"---\ntitle: {filePath.stem}\ntaxonomie: {taxonomie}\ntags:\n" +

@@ -9,8 +9,7 @@ from config import failedImages
 from config import NOT_NECESSARY, IGNORE_FOLDERS, ERROR_IMAGE_NOT_USED, ERROR_IMAGE_NOT_FOUND
 
 # Functions
-from report.table import generateMarkdownTable
-
+from report.table import createImageTableTow
 
 """
 Search for image links in the markdown content, and copy the images from the source/
@@ -58,28 +57,6 @@ def copyImages(content, srcDir, destDir):
 
     return errors
 
-# Create a row for the image report table
-def createImageTableTow(status, filePath, srcDir, error):
-    return {
-        "status" : status,
-        "image": filePath.stem,
-        "path": str(filePath.relative_to(srcDir)),
-        "error": error,
-    }
-
-# Format the image report table with specific headers and rows
-def formatImageReportTable(imageReport):
-    headers = ["Status", "Image", "Path", "Error"]
-    rows = [[
-        file['status'], 
-        file['image'], 
-        file['path'],
-        file['error']
-    ] for file in imageReport]
-
-    table = generateMarkdownTable(headers, rows)
-    return table
-
 """
 Fills the image Report with data from the images in the folders
 Every unique TC3 and TC1 combination will be added to the Report 2 data.
@@ -104,10 +81,6 @@ def getImagesInFolder(dir):
     for folder in folders:
         # Skip curtain folders
         if any(ignoreFolder in str(folder) for ignoreFolder in IGNORE_FOLDERS):
-            continue
-        
-        # Skip deprecated folders
-        if "deprecated" in str(folder):
             continue
         
         images.update(filePath for filePath in folder.rglob("*")) 

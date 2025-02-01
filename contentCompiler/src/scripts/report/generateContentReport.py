@@ -1,13 +1,10 @@
 # Variables
-from config import VERBOSE, WIPFiles, failedFiles, failedImages, parsedFiles
+from config import VERBOSE, WIPFiles, failedFiles, failedImages, parsedFiles, SUCCESS, WARNING
 
 # Functions
-from files.markdownUtils import formatFileReportTable
-from files.images import formatImageReportTable
+from report.table import formatFileReportTable, formatImageReportTable
 
-"""
-Generate the report based on the taxonomie report, success, and failed reports.
-"""
+# Generate the report based on the taxonomie report, success, and failed reports.
 def generateContentReport(reportPath):
     if VERBOSE: print("Generating report...")
     with open(reportPath, "w", encoding="utf-8") as f:
@@ -23,9 +20,8 @@ def generateContentReport(reportPath):
 
         f.write("## Gefaalde bestanden\n")
         f.write("*Doel: De onderstaande bestanden zijn niet succesvol verwerkt.*\n\n")
-        f.write('❌ Dit bestand bevat nog geen taxonomie code\n')
-        f.write('⚠️ Dit bestand bevat fouten. Zie de *Errors* kolom om te weten wat er mis is\n')
-        f.write('🟠 Dit bestand bevat een taxonomie code die niet toegevoegd hoeft te zijn\n')
+        f.write(SUCCESS + ' Dit bestand bevat nog geen taxonomie code\n')
+        f.write(WARNING + ' Dit bestand bevat fouten. Zie de *Errors* kolom\n')
         f.write('\n')
         f.write(formatFileReportTable(sorted(failedFiles, key=lambda x: x['file'])))
 
@@ -42,12 +38,3 @@ def generateContentReport(reportPath):
         f.write("De onderstaande bestanden zijn succesvol verwerkt.\n")
         f.write('\n')
         f.write(formatFileReportTable(sorted(parsedFiles, key=lambda x: x['file'])))
-
-    if VERBOSE:
-        print("Geslaagde bestanden:")
-        print(formatFileReportTable(sorted(parsedFiles, key=lambda x: x['file'])))
-        print("Gefaalde bestanden:")
-        print(formatFileReportTable(sorted(failedFiles, key=lambda x: x['file'])))
-        print("Gefaalde images:")
-        print(formatImageReportTable(sorted(failedImages, key=lambda x: x['image'])))
-        print("Report generated.")

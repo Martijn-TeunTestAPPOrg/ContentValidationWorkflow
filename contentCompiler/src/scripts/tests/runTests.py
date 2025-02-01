@@ -15,7 +15,7 @@ from report.generateTaxcoReport import generateTaxcoReport
 from report.generateContentReport import generateContentReport
 from files.parse import parseMarkdownFiles, parseDatasetFile
 from tests.evaluate import evaluateTests
-from report.populate import populateReport1, populateReport2
+from report.populate import populateTaxcoReport, populateContentReport
 
 def validateTestReport(expected, actual):
 
@@ -75,8 +75,8 @@ def test():
         os.mkdir(DEST_DIR)
 
     parseDatasetFile(DATASET)
-    populateReport1()
-    populateReport2()
+    populateTaxcoReport()
+    populateContentReport()
 
     parseMarkdownFiles(SRC_DIR, DEST_DIR, False) 
     

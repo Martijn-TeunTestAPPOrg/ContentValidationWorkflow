@@ -1,28 +1,22 @@
 #Global variables
-dataset = list()  # Dataset list 
-parsedFiles = [] # Track the status of each parsed file
-failedFiles = [] # Track the status of each failed file
-failedImages = [] # Track which images don't start with a 4C/ID component
-WIPFiles = [] # Track the files that contain Work-in-progress items
-report1 = {} # Report 1 data
-report2 = {} # Report 2 data
+dataset = list()												# Dataset list 
+parsedFiles = []												# Track the status of each parsed file
+failedFiles = []												# Track the status of each failed file
+failedImages = []												# Track which images don't start with a 4C/ID component
+WIPFiles = []													# Track the files that contain Work-in-progress items
+taxcoReport = {}												# Report 1 data
+contentReport = {}												# Report 2 data
 
 # Constants
-SRC_DIR = "src/cloned_repo/content" # Source directory where the markdown files are located
-DEST_DIR = "src/cloned_repo/build" # Destination directory where the updated markdown files will be saved
-TAXCO_REPORT_PATH = "src/cloned_repo/taxco_report.md" # Taxco report path where the taxco report will be saved
-CONTENT_REPORT_PATH = "src/cloned_repo/content_report.md" # Content report path where the content report will be saved
-DATASET = "src/datasets/dataset.xlsx" # Dataset containing the taxonomie information
-TODO_PATTERN = r'-=[A-Z]+=-' # To-Do pattern
+SRC_DIR = "src/cloned_repo/content"								# Source directory where the markdown files are located
+DEST_DIR = "src/cloned_repo/build"								# Destination directory where the updated markdown files will be saved
+TAXCO_REPORT_PATH = "src/cloned_repo/taxco_report.md"			# Taxco report path where the taxco report will be saved
+CONTENT_REPORT_PATH = "src/cloned_repo/content_report.md"		# Content report path where the content report will be saved
+DATASET = "src/datasets/dataset.xlsx" 							# Dataset containing the taxonomie information
+TODO_PATTERN = r'-=[A-Z]+=-' 									# Regex pattern to find TODO items
 TAXONOMIE_PATTERN = r'^[a-z]{2}-\d{1,3}\.[123]\.[^\s\.]+(-[^\s\.]+)*\.(?:OI|DT|PI|LT)$' # Taxonomie regex
-VALID_DYNAMIC_LINK_PREFIXES = ['https://', 'http://', 'tags/'] # List of valid dynamic links
-IGNORE_FOLDERS = ["schrijfwijze"] # Folders to ignore
-FOLDERS_FOR_4CID = { # List of 4C/ID components
-    "LT": "1. Leertaken",
-    "OI": "2. Ondersteunende-informatie",
-    "PI": "3. Procedurele-informatie",
-    "DT": "4. Deeltaken",
-}
+VALID_DYNAMIC_LINK_PREFIXES = ['https://', 'http://', 'tags/'] 	# List of valid dynamic links
+IGNORE_FOLDERS = ["schrijfwijze"] 								# Folders to ignore when parsing the markdown files
 
 # VERBOSE output flag
 VERBOSE = False 
@@ -48,7 +42,6 @@ DT_COL = 10
 ERROR_INVALID_TAXCO = "Ongeldige taxonomiecode: "
 ERROR_MISSING_TAXCO = "Geen taxonomiecode gevonden."
 ERROR_TAXCO_NOT_FOUND = "Taxonomie niet gevonden in dataset: "
-ERROR_TAXCO_IN_WRONG_4CID_COMPONENT = "4C/ID-component van taxonomie komt niet overeen met 4C/ID-map: "
 
 # Error message for images
 ERROR_IMAGE_NOT_FOUND = "Afbeelding niet gevonden: "
@@ -66,5 +59,4 @@ FAIL_CIRCLE = "⛔️"
 FAIL_CROSS = "❌"
 NOT_NECESSARY = "🏳️"
 WARNING = "⚠️"
-NOT_NEEDED = "🟠"
 TODO_ITEMS = "🔨"

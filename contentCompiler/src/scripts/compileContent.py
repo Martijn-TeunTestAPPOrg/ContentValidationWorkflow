@@ -1,15 +1,16 @@
 import os
 import time
 import shutil
+import argparse
 
 from config import DEST_DIR, SRC_DIR, TAXCO_REPORT_PATH, CONTENT_REPORT_PATH, DATASET
 
-from files.parse import parseDatasetFile, parseMarkdownFiles
+from files.dataset import parseDatasetFile
+from files.parse import parseMarkdownFiles
 from files.images import fillFailedImages
-from report.populate import populateReport1, populateReport2
+from report.populate import populateTaxcoReport, populateContentReport
 from report.generateTaxcoReport import generateTaxcoReport
 from report.generateContentReport import generateContentReport
-import argparse
 
 """
 Main entry point of the script.
@@ -27,8 +28,8 @@ def main():
 
     parseDatasetFile(DATASET)
 
-    populateReport1() 
-    populateReport2() 
+    populateTaxcoReport() 
+    populateContentReport() 
 
     if not os.path.exists(SRC_DIR):
         print(f"Source directory {SRC_DIR} not found.")

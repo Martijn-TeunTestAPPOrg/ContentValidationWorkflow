@@ -12,7 +12,7 @@ SRC_DIR = "src/cloned_repo/content"								                            # Source 
 DEST_DIR = "src/cloned_repo/build"								                            # Destination directory where the updated markdown files will be saved
 TAXCO_REPORT_PATH = "src/cloned_repo/taxco_report.md"			                            # Taxco report path where the taxco report will be saved
 CONTENT_REPORT_PATH = "src/cloned_repo/content_report.md"		                            # Content report path where the content report will be saved
-DATASET = "src/datasets/dataset.xlsx" 							                            # Dataset containing the taxonomie information
+DATASET = "src/dataset.xlsx" 							                            # Dataset containing the taxonomie information
 TODO_PATTERN = r'-=[A-Z]+=-' 									                            # Regex pattern to find TODO items
 TAXONOMIE_PATTERN = r'^[a-z]{2}-\d{1,3}\.[123]\.[^\s\.]+(-[^\s\.]+)*\.(?:OI|DT|PI|LT)$'     # Taxonomie regex
 VALID_DYNAMIC_LINK_PREFIXES = ['https://', 'http://', 'tags/'] 	                            # List of valid dynamic links
@@ -42,6 +42,7 @@ DT_COL = 10
 ERROR_INVALID_TAXCO = "Ongeldige taxonomiecode: "
 ERROR_MISSING_TAXCO = "Geen taxonomiecode gevonden."
 ERROR_TAXCO_NOT_FOUND = "Taxonomie niet gevonden in dataset: "
+ERROR_TAXCO_NOT_NEEDED = "Taxonomiecode gebruikt wanneer niet nodig: "
 
 # Error message for images
 ERROR_IMAGE_NOT_FOUND = "Afbeelding niet gevonden: "
@@ -54,9 +55,12 @@ ERROR_INVALID_DYNAMIC_LINK = "Dynamische link fout: "
 ERROR_WIP_FOUND = "Work-in-progress items gevonden: "
 
 # Icons
-SUCCESS = "✅"
-FAIL_CIRCLE = "⛔️"
-FAIL_CROSS = "❌"
-NOT_NECESSARY = "🏳️"
-WARNING = "⚠️"
-TODO_ITEMS = "🔨"
+SUCCESS_ICON = "✅"
+FAIL_CIRCLE_ICON = "⛔️"
+FAIL_CROSS_ICON = "❌"
+NOT_NECESSARY_ICON = "🏳️"
+WARNING_ICON = "⚠️"
+NOT_NEEDED_ICON = "🟠"
+TODO_ITEMS_ICON = "🔨"
+
+

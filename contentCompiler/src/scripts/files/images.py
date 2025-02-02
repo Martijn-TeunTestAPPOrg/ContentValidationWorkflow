@@ -6,7 +6,7 @@ from pathlib import Path
 from config import failedImages
 
 # Constants
-from config import NOT_NECESSARY, IGNORE_FOLDERS, ERROR_IMAGE_NOT_USED, ERROR_IMAGE_NOT_FOUND
+from config import IGNORE_FOLDERS, ERROR_IMAGE_NOT_USED, ERROR_IMAGE_NOT_FOUND, TODO_ITEMS_ICON
 
 # Functions
 from report.table import createImageTableTow
@@ -70,7 +70,8 @@ def fillFailedImages(srcDir, destDir):
 
     for image in srcImages: 
         if str(image.stem) not in {str(img.stem) for img in destImages}:
-            failedImages.append(createImageTableTow(NOT_NECESSARY, image, srcDirPath, ERROR_IMAGE_NOT_USED))    
+            failedImages.append(createImageTableTow(TODO_ITEMS_ICON, image, srcDirPath, ERROR_IMAGE_NOT_USED))
+            
 
 # Helper method to populate the image report
 def getImagesInFolder(dir):

@@ -1,5 +1,5 @@
 # Variables
-from config import failedFiles, WIPFiles, taxcoReport, NOT_NECESSARY
+from config import failedFiles, WIPFiles, taxcoReport, NOT_NECESSARY_ICON
 
 # Generate a markdown table string from a list of rows and headers.
 def generateMarkdownTable(headers, rows):

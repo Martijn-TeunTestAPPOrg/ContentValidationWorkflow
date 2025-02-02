@@ -3,7 +3,7 @@ from pathlib import Path
 # Variables
 from config import dataset, taxcoReport, contentReport
 # Constants
-from config import TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, NOT_NECESSARY, LT_COL, DT_COL, OI_COL, PI_COL, LT, DT, OI, PI
+from config import TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, NOT_NECESSARY_ICON, LT_COL, DT_COL, OI_COL, PI_COL, LT, DT, OI, PI
 
 ## Structure of report_1
 #
@@ -84,7 +84,7 @@ def populateTaxcoReport():
             taxcoReport[tc1] = {
                 "Proces" : proces,
                 "Processtap" : processtap,
-                'TC2': [NOT_NECESSARY if splittedTc2[0] == 'X' else 'x', NOT_NECESSARY if splittedTc2[1] == 'X' else 'x', NOT_NECESSARY if splittedTc2[2] == 'X' else 'x']        
+                'TC2': [NOT_NECESSARY_ICON if splittedTc2[0] == 'X' else 'x', NOT_NECESSARY_ICON if splittedTc2[1] == 'X' else 'x', NOT_NECESSARY_ICON if splittedTc2[2] == 'X' else 'x']        
             }
 
 """
@@ -114,10 +114,10 @@ def populateContentReport():
             splittedDT = dt.split(',')
             
             contentReport[tc3][tc1] = {
-                'TC2': [NOT_NECESSARY if splittedTc2[0] == 'X' else 'x', NOT_NECESSARY if splittedTc2[1] == 'X' else 'x', NOT_NECESSARY if splittedTc2[2] == 'X' else 'x'],
-                LT: [NOT_NECESSARY if splittedLT[0] == 'X' else 'x', NOT_NECESSARY if splittedLT[1] == 'X' else 'x', NOT_NECESSARY if splittedLT[2] == 'X' else 'x'],
-                OI: [NOT_NECESSARY if splittedOI[0] == 'X' else 'x', NOT_NECESSARY if splittedOI[1] == 'X' else 'x', NOT_NECESSARY if splittedOI[2] == 'X' else 'x'],
-                PI: [NOT_NECESSARY if splittedPI[0] == 'X' else 'x', NOT_NECESSARY if splittedPI[1] == 'X' else 'x', NOT_NECESSARY if splittedPI[2] == 'X' else 'x'],
-                DT: [NOT_NECESSARY if splittedDT[0] == 'X' else 'x', NOT_NECESSARY if splittedDT[1] == 'X' else 'x', NOT_NECESSARY if splittedDT[2] == 'X' else 'x'],
+                'TC2': [NOT_NECESSARY_ICON if splittedTc2[0] == 'X' else 'x', NOT_NECESSARY_ICON if splittedTc2[1] == 'X' else 'x', NOT_NECESSARY_ICON if splittedTc2[2] == 'X' else 'x'],
+                LT: [NOT_NECESSARY_ICON if splittedLT[0] == 'X' else 'x', NOT_NECESSARY_ICON if splittedLT[1] == 'X' else 'x', NOT_NECESSARY_ICON if splittedLT[2] == 'X' else 'x'],
+                OI: [NOT_NECESSARY_ICON if splittedOI[0] == 'X' else 'x', NOT_NECESSARY_ICON if splittedOI[1] == 'X' else 'x', NOT_NECESSARY_ICON if splittedOI[2] == 'X' else 'x'],
+                PI: [NOT_NECESSARY_ICON if splittedPI[0] == 'X' else 'x', NOT_NECESSARY_ICON if splittedPI[1] == 'X' else 'x', NOT_NECESSARY_ICON if splittedPI[2] == 'X' else 'x'],
+                DT: [NOT_NECESSARY_ICON if splittedDT[0] == 'X' else 'x', NOT_NECESSARY_ICON if splittedDT[1] == 'X' else 'x', NOT_NECESSARY_ICON if splittedDT[2] == 'X' else 'x'],
             }  
  

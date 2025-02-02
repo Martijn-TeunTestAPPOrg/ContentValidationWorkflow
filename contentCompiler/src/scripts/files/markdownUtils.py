@@ -6,7 +6,7 @@ from config import dataset, contentReport
 
 # Constants
 from config import PROCES_COL, PROCESSTAP_COL, TC3_COL, TC2_COL, TAXONOMIE_PATTERN, TODO_PATTERN, VERBOSE, ERROR_INVALID_TAXCO
-from config import ERROR_MISSING_TAXCO, NOT_NECESSARY, ERROR_TAXCO_NOT_FOUND
+from config import ERROR_MISSING_TAXCO, NOT_NECESSARY_ICON, ERROR_TAXCO_NOT_FOUND, ERROR_TAXCO_NOT_NEEDED
 
 # Functions
 from report.generateTaxcoReport import updateProcessReportData, updateSubjectReportData
@@ -29,7 +29,6 @@ def generateTags(taxonomies, existingTags):
             # Check if the taxonomie is in the correct format
             if not re.match(TAXONOMIE_PATTERN, taxonomie):
                 errors.append(ERROR_INVALID_TAXCO + ' `' + taxonomie + '` ')
-                print(ERROR_INVALID_TAXCO + taxonomie)
                 continue
 
             # split the taxonomie in it's different parts
@@ -62,7 +61,7 @@ def generateTags(taxonomies, existingTags):
                             # Check if the taxonomie is not needed
                             splittedRow =  row[TC2_COL].split(',')
                             if splittedRow[int(tc2)-1] == "X": 
-                               tags.append(NOT_NECESSARY)
+                                errors.append(ERROR_TAXCO_NOT_NEEDED + ' `' + taxonomie + '` ')  
 
 
                             # Update the process report data with the new values
@@ -71,7 +70,7 @@ def generateTags(taxonomies, existingTags):
                             # This is done so the report has all the taxonomies even if they are not used
                             # After this the report is updated with the correct data
                             updateProcessReportData(tc1, tc2)
-                            updateSubjectReportData(tc4, tc1, tc2, tc3)
+                            updateSubjectReportData(tc1, tc2, tc3, tc4)
 
             # If no tags were found, add an error
             if tags == [] and not errors:

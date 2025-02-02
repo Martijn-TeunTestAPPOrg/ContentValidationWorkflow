@@ -3,7 +3,7 @@ from pathlib import Path
 # Variables
 from config import failedFiles, parsedFiles, WIPFiles
 # Constants
-from config import ERROR_MISSING_TAXCO, FAIL_CROSS, WARNING, SUCCESS, TODO_ITEMS, IGNORE_FOLDERS, VERBOSE, ERROR_WIP_FOUND
+from config import ERROR_MISSING_TAXCO, FAIL_CROSS_ICON, WARNING_ICON, SUCCESS_ICON, TODO_ITEMS_ICON, IGNORE_FOLDERS, VERBOSE, ERROR_WIP_FOUND, ERROR_TAXCO_NOT_NEEDED, NOT_NEEDED_ICON
 # Functions
 from files.images import copyImages
 from files.links import updateDynamicLinks
@@ -63,15 +63,17 @@ def appendFileToSpecificList(errors, todoItems, filePath, srcDir, taxonomie, tag
     if errors:
         # Based on the type of error, add the file to the correct list
         if(todoItems):
-            WIPFiles.append(createFileReportRow(TODO_ITEMS, filePath, srcDir, taxonomie, tags, errors))
+            WIPFiles.append(createFileReportRow(TODO_ITEMS_ICON, filePath, srcDir, taxonomie, tags, errors))
         elif(ERROR_MISSING_TAXCO in errors): 
-            failedFiles.append(createFileReportRow(FAIL_CROSS, filePath, srcDir, taxonomie, tags, errors))
+            failedFiles.append(createFileReportRow(FAIL_CROSS_ICON, filePath, srcDir, taxonomie, tags, errors))
+        elif any(ERROR_TAXCO_NOT_NEEDED in error for error in errors):
+            failedFiles.append(createFileReportRow(NOT_NEEDED_ICON, filePath, srcDir, taxonomie, tags, errors))
         else: 
-            failedFiles.append(createFileReportRow(WARNING, filePath, srcDir, taxonomie, tags, errors))
+            failedFiles.append(createFileReportRow(WARNING_ICON, filePath, srcDir, taxonomie, tags, errors))
 
         if VERBOSE: print(f"Failed to parse file: {filePath}")
     else:
-        parsedFiles.append(createFileReportRow(SUCCESS, filePath, srcDir, taxonomie, tags, errors))
+        parsedFiles.append(createFileReportRow(SUCCESS_ICON, filePath, srcDir, taxonomie, tags, errors))
 
 # Combines everything into a new md file
 def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, content, destPath):

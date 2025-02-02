@@ -5,9 +5,9 @@ from config import dataset, taxcoReport, contentReport
 # Constants
 from config import TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, NOT_NECESSARY_ICON, LT_COL, DT_COL, OI_COL, PI_COL, LT, DT, OI, PI
 
-## Structure of report_1
+## Structure of taxcoReport
 #
-# report_1 = {
+# taxcoReport = {
 #     'rv-8' : {
 #         'Proces' : "Requirementanalyseproces"
 #         'Processtap' : "Verzamelen requirements",
@@ -20,9 +20,9 @@ from config import TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, NOT_NE
 #     }
 # }
 
-## Structure of report_2
+## Structure of contentReport
 #
-# report_2 = {
+# contentReport = {
 #     'functioneel-ontwerp' : {
 #         'oo-15' : {
 #             'TC2' : ['x', 'x', 'x'],

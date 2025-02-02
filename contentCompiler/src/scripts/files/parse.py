@@ -3,7 +3,7 @@ from pathlib import Path
 # Variables
 from config import failedFiles, parsedFiles, WIPFiles
 # Constants
-from config import ERROR_MISSING_TAXCO, FAIL_CROSS_ICON, WARNING_ICON, SUCCESS_ICON, TODO_ITEMS_ICON, IGNORE_FOLDERS, VERBOSE, ERROR_WIP_FOUND, ERROR_TAXCO_NOT_NEEDED, NOT_NEEDED_ICON
+from config import ERROR_NO_TAXCO_FOUND, FAIL_CROSS_ICON, WARNING_ICON, SUCCESS_ICON, TODO_ITEMS_ICON, IGNORE_FOLDERS, VERBOSE, ERROR_WIP_FOUND, ERROR_TAXCO_NOT_NEEDED, NOT_NEEDED_ICON
 # Functions
 from files.images import copyImages
 from files.links import updateDynamicLinks
@@ -41,7 +41,7 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
         imageErrors = copyImages(content, srcDirPath, destDirPath)
         existingTags = extractHeaderValues(content, 'tags')
         taxonomie = extractHeaderValues(content, 'taxonomie')
-        newTags, tagErrors = generateTags(taxonomie, existingTags)
+        newTags, tagErrors = generateTags(taxonomie, existingTags, filePath)
         difficulty = extractHeaderValues(content, 'difficulty')
         todoItems = findWIPItems(content)
 
@@ -64,7 +64,7 @@ def appendFileToSpecificList(errors, todoItems, filePath, srcDir, taxonomie, tag
         # Based on the type of error, add the file to the correct list
         if(todoItems):
             WIPFiles.append(createFileReportRow(TODO_ITEMS_ICON, filePath, srcDir, taxonomie, tags, errors))
-        elif(ERROR_MISSING_TAXCO in errors): 
+        elif(ERROR_NO_TAXCO_FOUND in errors): 
             failedFiles.append(createFileReportRow(FAIL_CROSS_ICON, filePath, srcDir, taxonomie, tags, errors))
         elif any(ERROR_TAXCO_NOT_NEEDED in error for error in errors):
             failedFiles.append(createFileReportRow(NOT_NEEDED_ICON, filePath, srcDir, taxonomie, tags, errors))

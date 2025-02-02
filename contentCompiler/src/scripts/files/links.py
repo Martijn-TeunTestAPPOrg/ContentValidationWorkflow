@@ -1,5 +1,5 @@
 # Imports
-import re, os
+import re, os, logging
 from pathlib import Path
 
 # Variables
@@ -18,7 +18,7 @@ def updateDynamicLinks(filePath, content, skipValidateDynamicLinks):
         
         # Skip links that start with any of the valid prefixes
         if any(cleanedLink.startswith(prefix) for prefix in VALID_DYNAMIC_LINK_PREFIXES):
-            return content, errors
+            continue
         
         # Remove 'content/' because in production the content is not in the 'content' folder but in the root of the build folder
         newLink = link.replace('content/', '')
@@ -33,8 +33,9 @@ def updateDynamicLinks(filePath, content, skipValidateDynamicLinks):
 
         # Check if the dynamic link is valid
         if not validateDynamicLink(filePath, newLink):
-            if VERBOSE: print(ERROR_INVALID_DYNAMIC_LINK + newLink)
-            errors.append(ERROR_INVALID_DYNAMIC_LINK + ' `' + newLink + '` ')
+            reportLink = newLink.replace('|', '\|')
+            errors.append(f"{ERROR_INVALID_DYNAMIC_LINK} `{reportLink}`")
+            logging.warning(f"{ERROR_INVALID_DYNAMIC_LINK} `{newLink}` in file: {filePath}")
 
     return content, errors
 
@@ -47,7 +48,7 @@ def validateDynamicLink(sourceFilePath, link):
     
     # Verify that contentPath exists
     if not contentPath.exists():
-        print(f"Error: Content path '{contentPath}' does not exist.")
+        logging.warning(f"Error: Content path '{contentPath}' does not exist.")
         return False
 
     # Clean up the link by removing the surrounding [[ and ]]
@@ -71,6 +72,6 @@ def validateDynamicLink(sourceFilePath, link):
 
     # If no valid file is found, report error with details
     if not foundFile:
-        if VERBOSE: print(f"Error: source file: {sourceFilePath}, target file '{fileName}' not found in content.")
+        logging.warning(f"Error: source file: {sourceFilePath}, target file '{fileName}' not found in content.")
 
     return False

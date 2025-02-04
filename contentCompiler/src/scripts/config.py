@@ -12,7 +12,7 @@ SRC_DIR = "src/cloned_repo/content"								                            # Source 
 DEST_DIR = "src/cloned_repo/build"								                            # Destination directory where the updated markdown files will be saved
 TAXCO_REPORT_PATH = "src/cloned_repo/taxco_report.md"			                            # Taxco report path where the taxco report will be saved
 CONTENT_REPORT_PATH = "src/cloned_repo/content_report.md"		                            # Content report path where the content report will be saved
-DATASET = "src/dataset.xlsx" 							                                    # Dataset containing the taxonomie information
+DATASET = "src/dataset/dataset.xlsx" 							                            # Dataset containing the taxonomie information
 TODO_PATTERN = r'-=[A-Z]+=-' 									                            # Regex pattern to find TODO items
 TAXONOMIE_PATTERN = r'^[a-z]{2}-\d{1,3}\.[123]\.[^\s\.]+(-[^\s\.]+)*\.(?:OI|DT|PI|LT)$'     # Taxonomie regex
 VALID_DYNAMIC_LINK_PREFIXES = ['https://', 'http://', 'tags/'] 	                            # List of valid dynamic links

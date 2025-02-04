@@ -206,7 +206,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
     // Step 11: Compile the content
     await new Promise<void>((resolve, reject) => {
         context.log.info(`Compiling content...`);
-        exec('python src/scripts/compile_content.py --skip-link-check', (error: any, stdout: any) => {
+        exec('python src/scripts/compileContent.py --skip-link-check', (error: any, stdout: any) => {
             if (error) {
                 context.log.error(`Execution error: ${error.message}`);
                 reject(error);

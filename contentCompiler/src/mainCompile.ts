@@ -71,7 +71,7 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
     // Step 6: Compile the content
     await new Promise<void>((resolve, reject) => {
         context.log.info(`Compiling content...`);
-        const pythonProcess = exec('python src/scripts/compile_content.py');
+        const pythonProcess = exec('python src/scripts/compileContent.py');
         
         let stdoutData = '';
         let stderrData = '';

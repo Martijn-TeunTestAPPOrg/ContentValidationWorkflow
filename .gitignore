@@ -27,3 +27,4 @@ dist-ssr
 **/cloned_repo
 **/__pycache__
 /contentCompiler/src/temp_storage
+**/.obsidian

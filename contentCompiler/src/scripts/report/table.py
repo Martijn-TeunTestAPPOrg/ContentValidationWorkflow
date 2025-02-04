@@ -1,5 +1,5 @@
 # Variables
-from config import failedFiles, WIPFiles, taxcoReport, NOT_NECESSARY_ICON
+from config import NOT_NECESSARY_ICON
 
 # Generate a markdown table string from a list of rows and headers.
 def generateMarkdownTable(headers, rows):
@@ -24,8 +24,6 @@ def createFileReportRow(status, filePath, srcDir, taxonomie, tags, errors):
 # Format the success or failed report table based on a list.
 def formatFileReportTable(fileReport):
     headers = ["Status", "File", "Path", "Taxonomie", "Tags", "Errors"]
-
-    if fileReport == failedFiles or fileReport == WIPFiles : headers.append("Errors")
     rows = [[
         file['status'], 
         file['file'], 

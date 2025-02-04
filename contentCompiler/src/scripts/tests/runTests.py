@@ -4,12 +4,12 @@ from pathlib import Path
 import shutil
 import os
 import sys
+import logging
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-#variables
-from config import failedFiles
 
-# Functions
+# Variables and functions
+from config import failedFiles
 from files.images import fillFailedImages
 from report.generateTaxcoReport import generateTaxcoReport
 from report.generateContentReport import generateContentReport
@@ -18,99 +18,127 @@ from files.dataset import parseDatasetFile
 from tests.evaluate import evaluateTests
 from report.populate import populateTaxcoReport, populateContentReport
 
-def validateTestReport(expected, actual):
+class TestRunner:
+    def __init__(self):
+        self.setupPaths()
+        self.setupLogging()
 
-    expectedTestReportPath =  Path(__file__).resolve().parents[1] / expected
-    actualTestReportPath = Path(__file__).resolve().parents[1] / actual
-    with open(expectedTestReportPath, 'r') as f1, open(actualTestReportPath, 'r') as f2:
-        expectedTestReportContent = f1.read()
-        actualTestReportContent = f2.read()
+    @staticmethod
+    def setupLogging() -> None:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s'
+        )
 
-    if expectedTestReportContent == actualTestReportContent:
-        return True
-    else:
-        return False
-    
-def validateDraft():
-    expectedAmountOfDraftFiles = len(failedFiles)
-    actualAmountOfDraftFiles = 0
-    for file in failedFiles:
-        fullPath = "src/scripts/tests/test_cases_build/" + file['path']
+    def setupPaths(self) -> None:
+        self.SRC_DIR = Path(__file__).resolve().parents[0] / 'test_cases'
+        self.DEST_DIR = Path(__file__).resolve().parents[0] / 'test_cases_build'
+        self.DATASET = Path(__file__).resolve().parents[0] / 'test_dataset.xlsx'
+        self.TAXCO_REPORT_PATH = Path(__file__).resolve().parents[0] / 'reports/actual_taxco_test_report.md'
+        self.CONTENT_REPORT_PATH = Path(__file__).resolve().parents[0] / 'reports/actual_content_test_report.md'
+        self.EXPECTED_TAXCO_TEST_REPORT_PATH = 'tests/reports/expected_taxco_test_report.md'
+        self.ACTUAL_TAXCO_TEST_REPORT_PATH = 'tests/reports/actual_taxco_test_report.md'
+        self.EXPECTED_CONTENT_TEST_REPORT_PATH = 'tests/reports/expected_content_test_report.md'
+        self.ACTUAL_CONTENT_TEST_REPORT_PATH = 'tests/reports/actual_content_test_report.md'
+
+    def validateTestReport(self, expected: str, actual: str) -> bool:
+        expectedTestReportPath = Path(__file__).resolve().parents[1] / expected
+        actualTestReportPath = Path(__file__).resolve().parents[1] / actual
+        
+        with open(expectedTestReportPath, 'r') as f1, open(actualTestReportPath, 'r') as f2:
+            expectedTestReportContent = f1.read()
+            actualTestReportContent = f2.read()
+
+        return expectedTestReportContent == actualTestReportContent
+
+    def validateDraft(self) -> bool:
+        expectedAmountOfDraftFiles = len(failedFiles)
+        actualAmountOfDraftFiles = 0
+        
+        for file in failedFiles:
+            fullPath = "src/scripts/tests/test_cases_build/" + file['path']
+            try:
+                with open(fullPath, 'r', encoding='utf-8') as file:
+                    for line in file:
+                        if line.strip().startswith('draft:'):
+                            draft_value = line.strip().split(':', 1)[1].strip().lower()
+                            if draft_value == 'true':
+                                actualAmountOfDraftFiles += 1
+            except FileNotFoundError:
+                logging.error(f"Error: The file at '{fullPath}' does not exist.")
+            except Exception as e:
+                logging.error(f"An error occurred: {e}")
+                
+        return expectedAmountOfDraftFiles == actualAmountOfDraftFiles
+
+    def validatePaths(self) -> None:
+        if not os.path.exists(self.DATASET):
+            raise FileNotFoundError(f"Dataset file {self.DATASET} not found.")
+        if not os.path.exists(self.SRC_DIR):
+            raise FileNotFoundError(f"Source directory {self.SRC_DIR} not found.")
+
+    def initializeDestDir(self) -> None:
+        if os.path.exists(self.DEST_DIR):
+            shutil.rmtree(self.DEST_DIR)
+        os.mkdir(self.DEST_DIR)
+
+    def run(self) -> None:
         try:
-            with open(fullPath, 'r', encoding='utf-8') as file:
-                for line in file:
-                    if line.strip().startswith('draft:'):
-                        draft_value = line.strip().split(':', 1)[1].strip().lower()
-                        if draft_value == 'true':
-                            actualAmountOfDraftFiles += 1
-        except FileNotFoundError:
-            print(f"Error: The file at '{fullPath}' does not exist.")
-        except Exception as e:
-            print(f"An error occurred: {e}")
-    return expectedAmountOfDraftFiles == actualAmountOfDraftFiles
+            self.validatePaths()
+            self.initializeDestDir()
+            
+            logging.info("Starting test execution...")
+            
+            parseDatasetFile(self.DATASET)
+            logging.info("Dataset parsed successfully")
+            
+            populateTaxcoReport()
+            populateContentReport()
+            logging.info("Reports populated")
+            
+            parseMarkdownFiles(self.SRC_DIR, self.DEST_DIR, False)
+            logging.info("Markdown files parsed")
+            
+            fillFailedImages(self.SRC_DIR, self.DEST_DIR)
+            logging.info("Failed images processed")
+            
+            generateTaxcoReport(self.TAXCO_REPORT_PATH)
+            generateContentReport(self.CONTENT_REPORT_PATH)
+            logging.info("Reports generated")
 
-"""
-Runs the tests for the pipeline
-"""
-def test():
-    global SRC_DIR, DEST_DIR, DATASET
-
-    SRC_DIR = Path(__file__).resolve().parents[0] / 'test_cases'
-    DEST_DIR = Path(__file__).resolve().parents[0] / 'test_cases_build'
-    DATASET = Path(__file__).resolve().parents[0] / 'test_dataset.xlsx'
-    TAXCO_REPORT_PATH = Path(__file__).resolve().parents[0] / 'reports/actual_taxco_test_report.md'
-    CONTENT_REPORT_PATH = Path(__file__).resolve().parents[0] / 'reports/actual_content_test_report.md'
-    EXPECTED_TAXCO_TEST_REPORT_PATH = 'tests/reports/expected_taxco_test_report.md'
-    ACTUAL_TAXCO_TEST_REPORT_PATH = 'tests/reports/actual_taxco_test_report.md'
-    EXPECTED_CONTENT_TEST_REPORT_PATH = 'tests/reports/expected_content_test_report.md'
-    ACTUAL_CONTENT_TEST_REPORT_PATH = 'tests/reports/actual_content_test_report.md'
-
-    if not os.path.exists(DATASET):
-        print(f"Dataset file {DATASET} not found.")
-        exit(404) 
-
-    if not os.path.exists(SRC_DIR):
-        print(f"Source directory {SRC_DIR} not found.")
-        exit(404)
-    
-
-    if os.path.exists(DEST_DIR):
-        shutil.rmtree(DEST_DIR)
-        os.mkdir(DEST_DIR)
-
-    parseDatasetFile(DATASET)
-    populateTaxcoReport()
-    populateContentReport()
-
-    parseMarkdownFiles(SRC_DIR, DEST_DIR, False) 
-    
-    fillFailedImages(SRC_DIR, DEST_DIR) 
-
-    generateTaxcoReport(TAXCO_REPORT_PATH)
-    generateContentReport(CONTENT_REPORT_PATH) 
-
-    if validateTestReport(EXPECTED_TAXCO_TEST_REPORT_PATH, ACTUAL_TAXCO_TEST_REPORT_PATH): 
-        print("Taxco test report validation successful")
-        if validateTestReport(EXPECTED_CONTENT_TEST_REPORT_PATH, ACTUAL_CONTENT_TEST_REPORT_PATH):
-            print("Content Test report validation successful")
-            if evaluateTests():
-                print("Test evaluation successful")
-                if(validateDraft()):
-                    print("Draft test successful")
-                    sys.exit(0)
+            if self.validateTestReport(self.EXPECTED_TAXCO_TEST_REPORT_PATH, self.ACTUAL_TAXCO_TEST_REPORT_PATH):
+                logging.info("Taxco test report validation successful")
+                if self.validateTestReport(self.EXPECTED_CONTENT_TEST_REPORT_PATH, self.ACTUAL_CONTENT_TEST_REPORT_PATH):
+                    logging.info("Content Test report validation successful")
+                    if evaluateTests():
+                        logging.info("Test evaluation successful")
+                        if self.validateDraft():
+                            logging.info("Draft test successful")
+                            sys.exit(0)
+                        else:
+                            logging.error("Draft test failed")
+                            sys.exit(14)
+                    else:
+                        logging.error("Test evaluation failed")
+                        sys.exit(13)
                 else:
-                    print("Draft test failed")
-                    sys.exit(14)
-            else : 
-                print("Test evaluation failed")
-                sys.exit(13)  
-        else:
-            print("Content Test report validation failed")
-            sys.exit(12)
-    else : 
-        print("Taxco Test report validation failed")
-        sys.exit(11)
+                    logging.error("Content Test report validation failed")
+                    sys.exit(12)
+            else:
+                logging.error("Taxco Test report validation failed")
+                sys.exit(11)
+                
+        except Exception as e:
+            logging.error(f"Error during test execution: {str(e)}")
+            raise
+
+def main() -> None:
+    try:
+        runner = TestRunner()
+        runner.run()
+    except Exception as e:
+        logging.error(f"Test execution failed: {str(e)}")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    test()
-    
+    main()

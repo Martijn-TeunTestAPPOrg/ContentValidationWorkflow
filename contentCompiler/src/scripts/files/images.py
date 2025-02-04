@@ -51,7 +51,7 @@ def copyImages(content, srcDir, destDir):
         else:
             error_msg = f"{ERROR_IMAGE_NOT_FOUND} `{imagePath}`"
             logging.warning(error_msg)
-            errors.append(error_msg)
+            errors.append(ERROR_IMAGE_NOT_FOUND)
 
     return errors
 
@@ -68,9 +68,9 @@ def fillFailedImages(srcDir, destDir):
 
     for image in srcImages: 
         if str(image.stem) not in {str(img.stem) for img in destImages}:
-            error_msg = f"{ERROR_IMAGE_NOT_USED} `{str(image)}`"
+            error_msg = f"{ERROR_IMAGE_NOT_USED} `{image.stem}`"
             logging.warning(error_msg)
-            failedImages.append(createImageTableTow(TODO_ITEMS_ICON, image, srcDirPath, error_msg))
+            failedImages.append(createImageTableTow(TODO_ITEMS_ICON, image, srcDirPath, ERROR_IMAGE_NOT_USED))
 
 # Helper method to populate the image report
 def getImagesInFolder(dir):

@@ -1,6 +1,7 @@
 # Imports
 import csv
 import pandas as pd
+import logging
 
 # Variables
 from config import dataset, TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, LT_COL, OI_COL, PI_COL, DT_COL
@@ -27,9 +28,11 @@ def parseDatasetFile(datasetFile):
         for row in dataset[1:]:
             if checkRowEmpty(row): 
                 dataset.remove(row)
-    except FileNotFoundError:
-        print(f"File {datasetFile} not found.")
-        exit(404)
+                logging.info(f"Removed empty row: {row}")
+
+    except FileNotFoundError as e:
+        logging.error(f"Dataset file {datasetFile} not found")
+        raise
     except Exception as e:
-        print(f"An error occurred while reading the dataset file: {e}")
-        exit(404)
+        logging.error(f"An error occurred while reading the dataset file: {str(e)}")
+        raise

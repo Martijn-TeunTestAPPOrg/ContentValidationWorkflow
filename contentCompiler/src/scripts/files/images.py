@@ -1,12 +1,9 @@
-# Imports
-import os, re, shutil, logging
 from pathlib import Path
-# Variables
+import os, re, shutil, logging
 from config import failedImages
-# Constants
 from config import IGNORE_FOLDERS, ERROR_IMAGE_NOT_USED, ERROR_IMAGE_NOT_FOUND, TODO_ITEMS_ICON
-# Functions
 from report.table import createImageTableTow
+
 
 """
 Search for image links in the markdown content, and copy the images from the source/

@@ -311,5 +311,14 @@ export const mainCompile = async (app: Probot, context: Context<'push'>) => {
         throw error;
     }
 
+    // Step 21: Delete the dataset folder
+    try {
+        context.log.info('Removing the dataset folder...');
+        deleteFolderRecursiveSync(app, datasetFolder);
+    } catch (error: any) {
+        context.log.error(`Failed to delete the dataset folder: ${error.message}`);
+        throw error;
+    }
+
     context.log.info('Sync to staging branch completed successfully');
 }

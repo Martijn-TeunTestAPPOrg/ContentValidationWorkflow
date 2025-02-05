@@ -1,11 +1,5 @@
-import os
-import time
-import shutil
-import argparse
-import logging
-
+import os, time, shutil, argparse, logging
 from config import DEST_DIR, SRC_DIR, TAXCO_REPORT_PATH, CONTENT_REPORT_PATH, DATASET
-
 from files.dataset import parseDatasetFile
 from files.parse import parseMarkdownFiles
 from files.images import fillFailedImages

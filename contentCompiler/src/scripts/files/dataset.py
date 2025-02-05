@@ -1,10 +1,8 @@
-# Imports
-import csv
+import csv, logging
 import pandas as pd
-import logging
+from config import dataset
+from config import TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, LT_COL, OI_COL, PI_COL, DT_COL
 
-# Variables
-from config import dataset, TC1_COL, TC2_COL, TC3_COL, PROCES_COL, PROCESSTAP_COL, LT_COL, OI_COL, PI_COL, DT_COL
 
 # Helper function to check if a row is empty
 def checkRowEmpty(row):

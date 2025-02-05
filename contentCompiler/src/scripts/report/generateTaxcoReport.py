@@ -1,9 +1,7 @@
-# Variables
-from config import VERBOSE, taxcoReport, contentReport
-# Constants
-from config import LT, DT, OI, PI, FAIL_CIRCLE_ICON, SUCCESS_ICON, NOT_NECESSARY_ICON
-# Functions
 from report.table import generateMarkdownTable
+from config import taxcoReport, contentReport
+from config import LT, DT, OI, PI, FAIL_CIRCLE_ICON, SUCCESS_ICON, NOT_NECESSARY_ICON
+
 
 # Update the taxco list with the new values
 def updateProcessReportData(tc1, tc2):
@@ -26,7 +24,6 @@ def updateSubjectReportData(tc1, tc2, tc3, fileType):
             'v' if fileTypeFull == searchType and tc2 == '2' and contentReport[tc3][tc1][searchType][1] != NOT_NECESSARY_ICON else contentReport[tc3][tc1][searchType][1], 
             'v' if fileTypeFull == searchType and tc2 == '3' and contentReport[tc3][tc1][searchType][2] != NOT_NECESSARY_ICON else contentReport[tc3][tc1][searchType][2]
         ]
-    
 
     contentReport[tc3][tc1]['TC2'] = ['v' if tc2 == '1' and contentReport[tc3][tc1]['TC2'][0] != NOT_NECESSARY_ICON else contentReport[tc3][tc1]['TC2'][0], 'v' if tc2 == '2' and contentReport[tc3][tc1]['TC2'][1] != NOT_NECESSARY_ICON else contentReport[tc3][tc1]['TC2'][1], 'v' if tc2 == '3' and contentReport[tc3][tc1]['TC2'][2] != NOT_NECESSARY_ICON else contentReport[tc3][tc1]['TC2'][2]]
     updateSubjectReportRow(tc1, tc2, tc3, fileType, LT)
@@ -36,7 +33,6 @@ def updateSubjectReportData(tc1, tc2, tc3, fileType):
 
 # Generate the report based on the taxonomie report, success, and failed reports.
 def generateTaxcoReport(reportPath):
-    if VERBOSE: print("Generating report...")
     with open(reportPath, "w", encoding="utf-8") as f:
         f.write('---\ndraft: true\n---\n')
         
@@ -61,8 +57,6 @@ def generateTaxcoReport(reportPath):
 
 # Format the report table for the process table
 def generateProcessTable():
-    if VERBOSE: print("Generating process table...")
-
     headers = ["TC1", "Proces", "Processtap", "Niveau 1", "Niveau 2", "Niveau 3"]
     rows = []
     for tc, details in taxcoReport.items():
@@ -75,13 +69,10 @@ def generateProcessTable():
         rows.append([tc, proces, processtap, niveau_1, niveau_2, niveau_3])
 
     table = generateMarkdownTable(headers, rows)
-    if VERBOSE: print("Taxco report proces table generated.")
     return table
 
 # Format the report for the subject table
 def generateSubjectTable():
-    if VERBOSE: print("Generating subject table...")
-
     headers = ["TC3", "TC1", "TC2", LT, OI, PI, DT]
     rows = []
 
@@ -114,7 +105,5 @@ def generateSubjectTable():
 
             rows.append([tc3, tc1, tc2, leertaak, ondersteunende_informatie, procedurele_informatie, deeltaak])
 
-    table = generateMarkdownTable(headers, rows)
-    if VERBOSE: print("Taxco report content table generated.")
-    
+    table = generateMarkdownTable(headers, rows)    
     return table

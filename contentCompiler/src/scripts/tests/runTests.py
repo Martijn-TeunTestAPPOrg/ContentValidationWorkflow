@@ -1,10 +1,6 @@
 # Imports
-import re
 from pathlib import Path
-import shutil
-import os
-import sys
-import logging
+import shutil, os, sys, logging
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -122,7 +118,7 @@ class TestRunner:
                 logging.error("Draft test failed")
                 sys.exit(14)
 
-            logging.info("Testing completed succesfully")
+            logging.info("Testing completed successfully")
             sys.exit(0)
                 
         except Exception as e:

@@ -1,19 +1,15 @@
-# Imports
+import logging
 from pathlib import Path
-# Variables
 from config import failedFiles, parsedFiles, WIPFiles
-# Constants
-from config import ERROR_NO_TAXCO_FOUND, FAIL_CROSS_ICON, WARNING_ICON, SUCCESS_ICON, TODO_ITEMS_ICON, IGNORE_FOLDERS, VERBOSE, ERROR_WIP_FOUND, ERROR_TAXCO_NOT_NEEDED, NOT_NEEDED_ICON
-# Functions
+from config import ERROR_NO_TAXCO_FOUND, FAIL_CROSS_ICON, WARNING_ICON, SUCCESS_ICON, TODO_ITEMS_ICON, IGNORE_FOLDERS, ERROR_WIP_FOUND, ERROR_TAXCO_NOT_NEEDED, NOT_NEEDED_ICON
 from files.images import copyImages
 from files.links import updateDynamicLinks
-from files.markdownUtils import extractHeaderValues, generateTags, findWIPItems
 from report.table import createFileReportRow
+from files.markdownUtils import extractHeaderValues, generateTags, findWIPItems
+
 
 # Update markdown files in the source directory
 def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
-    if VERBOSE: print("Parsing markdown files...")
-
     destDirPath = Path(destDir).resolve()
     destDirPath.mkdir(parents=True, exist_ok=True)
 
@@ -28,11 +24,8 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
 
         # Skip curtain folders
         if any(folder in str(filePath) for folder in IGNORE_FOLDERS):
+            logging.info(f"Skipping folder: {filePath}")
             continue
-
-        if VERBOSE: 
-            print("*" * 50) 
-            print(f"Parsing file: {filePath}")
 
         with open(filePath, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -70,8 +63,6 @@ def appendFileToSpecificList(errors, todoItems, filePath, srcDir, taxonomie, tag
             failedFiles.append(createFileReportRow(NOT_NEEDED_ICON, filePath, srcDir, taxonomie, tags, errors))
         else: 
             failedFiles.append(createFileReportRow(WARNING_ICON, filePath, srcDir, taxonomie, tags, errors))
-
-        if VERBOSE: print(f"Failed to parse file: {filePath}")
     else:
         parsedFiles.append(createFileReportRow(SUCCESS_ICON, filePath, srcDir, taxonomie, tags, errors))
 
@@ -95,7 +86,3 @@ def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, content, dest
 
     with open(destPath, 'w', encoding='utf-8') as f:
         f.write(newContent)
-
-    if VERBOSE:
-        print(f"File completed: {filePath}")
-        print("-" * 50)

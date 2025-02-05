@@ -1,9 +1,6 @@
-# Imports
 import re, os, logging
 from pathlib import Path
-
-# Variables
-from config import VALID_DYNAMIC_LINK_PREFIXES, ERROR_INVALID_DYNAMIC_LINK, VERBOSE
+from config import VALID_DYNAMIC_LINK_PREFIXES, ERROR_INVALID_DYNAMIC_LINK
 
 
 # Update dynamic links in the content of a markdown file.
@@ -35,7 +32,7 @@ def updateDynamicLinks(filePath, content, skipValidateDynamicLinks):
         if not validateDynamicLink(filePath, newLink):
             reportLink = newLink.replace('|', '\|')
             errors.append(f"{ERROR_INVALID_DYNAMIC_LINK} `{reportLink}`")
-            logging.warning(f"{ERROR_INVALID_DYNAMIC_LINK} `{newLink}` in file: {filePath}")
+            logging.warning(f"{ERROR_INVALID_DYNAMIC_LINK} `{newLink}` in bestand: {filePath}")
 
     return content, errors
 

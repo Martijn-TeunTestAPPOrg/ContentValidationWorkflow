@@ -1,15 +1,8 @@
-# Imports
 import re, logging
-
-# Variables
 from config import dataset, contentReport
-
-# Constants
-from config import PROCES_COL, PROCESSTAP_COL, TC3_COL, TC2_COL, TAXONOMIE_PATTERN, TODO_PATTERN, VERBOSE, ERROR_INVALID_TAXCO
-from config import ERROR_NO_TAXCO_FOUND, NOT_NECESSARY_ICON, ERROR_TAXCO_NOT_FOUND, ERROR_TAXCO_NOT_NEEDED
-
-# Functions
+from config import PROCES_COL, PROCESSTAP_COL, TC3_COL, TC2_COL, TAXONOMIE_PATTERN, TODO_PATTERN, ERROR_INVALID_TAXCO, ERROR_NO_TAXCO_FOUND, ERROR_TAXCO_NOT_FOUND, ERROR_TAXCO_NOT_NEEDED
 from report.generateTaxcoReport import updateProcessReportData, updateSubjectReportData
+
 
 """
 Generate tags based on the taxonomie values
@@ -26,11 +19,10 @@ def generateTags(taxonomies, existingTags, filePath):
 
     if taxonomies is not None and taxonomies != ['None'] and taxonomies != [''] and taxonomies != []:
         for taxonomie in taxonomies:
-            if VERBOSE : print(f"Generating tags for taxonomie: {taxonomie}")
             # Check if the taxonomie is in the correct format
             if not re.match(TAXONOMIE_PATTERN, taxonomie):
                 errors.append(f"{ERROR_INVALID_TAXCO} `{taxonomie}`")
-                logging.warning(f"{ERROR_INVALID_TAXCO} `{taxonomie}` in file: {filePath}")
+                logging.warning(f"{ERROR_INVALID_TAXCO} `{taxonomie}` in bestand: {filePath}")
                 continue
 
             # split the taxonomie in it's different parts
@@ -64,7 +56,7 @@ def generateTags(taxonomies, existingTags, filePath):
                             splittedRow =  row[TC2_COL].split(',')
                             if splittedRow[int(tc2)-1] == "X": 
                                 errors.append(f"{ERROR_TAXCO_NOT_NEEDED} `{taxonomie}`")
-                                logging.warning(f"{ERROR_TAXCO_NOT_NEEDED} `{taxonomie}` in file: {filePath}")
+                                logging.warning(f"{ERROR_TAXCO_NOT_NEEDED} `{taxonomie}` in bestand: {filePath}")
 
                             # Update the process report data with the new values
                             # This is needed so the report has the correct data
@@ -77,10 +69,10 @@ def generateTags(taxonomies, existingTags, filePath):
             # If no tags were found, add an error
             if tags == [] and not errors:
                 errors.append(f"{ERROR_TAXCO_NOT_FOUND} `{taxonomie}`")   
-                logging.warning(f"{ERROR_TAXCO_NOT_FOUND} `{taxonomie}` in file: {filePath}")
+                logging.warning(f"{ERROR_TAXCO_NOT_FOUND} `{taxonomie}` in bestand: {filePath}")
     else:
         errors.append(f"{ERROR_NO_TAXCO_FOUND}")
-        logging.warning(f"{ERROR_NO_TAXCO_FOUND} in file: {filePath}")
+        logging.warning(f"{ERROR_NO_TAXCO_FOUND} in bestand: {filePath}")
 
     # Combine the existing tags with the new tags
     if existingTags: combinedTags += existingTags 

@@ -1,6 +1,3 @@
-# Variables
-from config import NOT_NECESSARY_ICON
-
 # Generate a markdown table string from a list of rows and headers.
 def generateMarkdownTable(headers, rows):
     table = "| " + " | ".join(headers) + " |\n"

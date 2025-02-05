@@ -18,7 +18,6 @@ TAXONOMIE_PATTERN = r'^[a-z]{2}-\d{1,3}\.[123]\.[^\s\.]+(-[^\s\.]+)*\.(?:OI|DT|P
 VALID_DYNAMIC_LINK_PREFIXES = ['https://', 'http://', 'tags/'] 	                            # List of valid dynamic links
 IGNORE_FOLDERS = ["schrijfwijze"] 								                            # Folders to ignore when parsing the markdown files
 
-
 VERBOSE = False                                                                             # Flag to enable verbose output
 
 # 4CID names

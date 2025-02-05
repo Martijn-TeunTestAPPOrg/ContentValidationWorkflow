@@ -5,6 +5,8 @@ import { simpleGit } from "simple-git";
 import { Probot, Context } from "probot";
 import { getDefaultConfig, getInstallationToken, configureGit, clearTempStorage, deleteFolderRecursiveSync } from "./helpers.js";
 
+// This variable is used to keep track of the steps that have been executed
+var stepSixReviewId: number | null = null;
 
 export const preCompile = async (app: Probot, context: Context<'pull_request'>) => {
     const { gitAppName, gitAppEmail, repoOwner, repoName, repoUrl, clonedRepoFolder, cloneTargetDirectory, tempStorageDirectory, datasetRepoUrl, datasetFolder } = getDefaultConfig(context);
@@ -125,7 +127,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         const commentBody = `# **Aanpassingen buiten content gevonden, niet toegestaan!** \n ## Gevonden bestanden: \n \`\`\` \n ${formattedFiles} \n \`\`\` \n\n Gelieve alleen aanpassingen te maken in de content map.`;
 
         // Create a review requesting changes
-        await context.octokit.pulls.createReview({
+        const review = await context.octokit.pulls.createReview({
             owner: repoOwner,
             repo: repoName,
             pull_number: prNumber,
@@ -133,31 +135,14 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
             body: commentBody
         });
 
-        // return; // TODO: Remove the comment, this is so the rest of the code is executed. In prod this should be enabled.
+        // Log the review ID
+        context.log.info(`Successfully posted comment with ID ${review.data.id}`);
+
+        // Set the flag so we don't post another comment in step 7
+        stepSixReviewId = review.data.id;
     }
 
-    // Step 7: Check if there are unmerged files
-    if (changedFiles.some(file => file.status === 'unmerged')) {
-        context.log.error('Unmerged files found: ');
-        console.log(changedFiles);
-
-        // Format the files for the comment
-        const formattedFiles = changedFiles.map(file => file.filename).join('\n');
-        const commentBody = `# **Bestanden met conflicten gevonden!** \n ## Gevonden bestanden: \n \`\`\` \n ${formattedFiles} \n \`\`\` \n\n Gelieve de conflicten op te lossen.`;
-
-        // Create a review requesting changes
-        await context.octokit.pulls.createReview({
-            owner: repoOwner,
-            repo: repoName,
-            pull_number: prNumber,
-            event: 'REQUEST_CHANGES',
-            body: commentBody
-        });
-
-        // return; // TODO: Remove the comment, this is so the rest of the code is executed. In prod this should be enabled.
-    }
-
-    // Step 8 Copy the changed files to temp
+    // Step 7 Copy the changed files to temp
     try {
         context.log.info(`Copying changed files to temp storage folder ${tempStorageDirectory}`);
 
@@ -185,7 +170,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         throw error;
     }
     
-    // Step 9: Remove the cloned repo folder
+    // Step 8: Remove the cloned repo folder
     try {
         context.log.info('Removing the cloned repo directory...');
         deleteFolderRecursiveSync(app, cloneTargetDirectory);
@@ -194,7 +179,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         throw error;
     }
 
-    // Step 10: Move the temp storage folder to the cloned repo folder
+    // Step 9: Move the temp storage folder to the cloned repo folder
     try {
         context.log.info('Moving the temp storage folder to the cloned repo folder...');
         fs.renameSync(tempStorageDirectory, cloneTargetDirectory);
@@ -203,7 +188,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         throw error;
     }
 
-    // Step 11: Compile the content
+    // Step 10: Compile the content
     await new Promise<void>((resolve, reject) => {
         context.log.info(`Compiling content...`);
         exec('python src/scripts/compileContent.py --skip-link-check', (error: any, stdout: any) => {
@@ -217,23 +202,32 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         });
     });
 
-    // Step 12: Hide previous bot comments before posting a new one
+    // Step 11: Hide previous bot comments before posting a new one
     try {
         context.log.info('Fetching all reviews on the PR...');
         const reviews = await context.octokit.pulls.listReviews({
             owner: repoOwner,
             repo: repoName,
             pull_number: prNumber,
+            sort: 'created',  // Ensure reviews are sorted by creation time
+            direction: 'desc' // Most recent first
         });
 
         // Filter out bot comments
         const botReviews = reviews.data.filter(review =>
-            review.user?.login === process.env.GITHUB_BOT_NAME && review.user?.type === "Bot",
+            review.user?.login === process.env.GITHUB_BOT_NAME && review.user?.type === "Bot"
         );
 
         context.log.info(`Found ${botReviews.length} previous bot comments.`);
 
+        // Hide all bot comments except the most recent one if it was posted in this run
         for (const review of botReviews) {
+            // Skip hiding the most recent comment if it was posted in this run
+            if (stepSixReviewId !== null && review.id === stepSixReviewId) {
+                context.log.info(`Skipping hiding most recent comment with ID ${review.id} since it was posted in this run`);
+                continue;
+            }
+
             // Use GraphQL to minimize the review
             const query = `
                 mutation MinimizeComment($id: ID!) {
@@ -258,7 +252,7 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         }
     }
 
-    // Step 13: Create a review with the compiled content
+    // Step 12: Create a review with the compiled content
     try {
         // Read the content report file
         const reportPath = path.join(cloneTargetDirectory, 'content_report.md');
@@ -277,14 +271,25 @@ export const preCompile = async (app: Probot, context: Context<'pull_request'>) 
         throw error;
     }
 
-    // Step 14: Delete the cloned repository
+    // Step 13: Delete the cloned repository
     try {
+        context.log.info('Removing the cloned repository...');
         deleteFolderRecursiveSync(app, clonedRepoFolder);
     } catch (error) {
         context.log.error(`Error deleting cloned repository: ${error}`);
         throw error;
     }
 
+    // Step 14: Delete the dataset folder
+    try {
+        context.log.info('Removing the dataset folder...');
+        deleteFolderRecursiveSync(app, datasetFolder);
+    } catch (error) {
+        context.log.error(`Error deleting dataset folder: ${error}`);
+        throw error;
+    }
+
     context.log.info('Pre-compile completed successfully');
+    stepSixReviewId = null;
 }
 

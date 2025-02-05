@@ -1,11 +1,10 @@
-# Variables
-from config import VERBOSE, WIPFiles, failedFiles, failedImages, parsedFiles, WARNING_ICON, FAIL_CROSS_ICON, NOT_NEEDED_ICON, TODO_ITEMS_ICON
-# Functions
 from report.table import formatFileReportTable, formatImageReportTable
+from config import WIPFiles, failedFiles, failedImages, parsedFiles
+from config import WARNING_ICON, FAIL_CROSS_ICON, NOT_NEEDED_ICON
+
 
 # Generate the report based on the taxonomie report, success, and failed reports.
 def generateContentReport(reportPath):
-    if VERBOSE: print("Generating report...")
     with open(reportPath, "w", encoding="utf-8") as f:
         f.write('---\ndraft: true\n---\n')
         

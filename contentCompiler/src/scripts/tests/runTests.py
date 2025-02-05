@@ -106,27 +106,24 @@ class TestRunner:
             generateContentReport(self.CONTENT_REPORT_PATH)
             logging.info("Reports generated")
 
-            if self.validateTestReport(self.EXPECTED_TAXCO_TEST_REPORT_PATH, self.ACTUAL_TAXCO_TEST_REPORT_PATH):
-                logging.info("Taxco test report validation successful")
-                if self.validateTestReport(self.EXPECTED_CONTENT_TEST_REPORT_PATH, self.ACTUAL_CONTENT_TEST_REPORT_PATH):
-                    logging.info("Content Test report validation successful")
-                    if evaluateTests():
-                        logging.info("Test evaluation successful")
-                        if self.validateDraft():
-                            logging.info("Draft test successful")
-                            sys.exit(0)
-                        else:
-                            logging.error("Draft test failed")
-                            sys.exit(14)
-                    else:
-                        logging.error("Test evaluation failed")
-                        sys.exit(13)
-                else:
-                    logging.error("Content Test report validation failed")
-                    sys.exit(12)
-            else:
+            if not self.validateTestReport(self.EXPECTED_TAXCO_TEST_REPORT_PATH, self.ACTUAL_TAXCO_TEST_REPORT_PATH):
                 logging.error("Taxco Test report validation failed")
                 sys.exit(11)
+
+            if not self.validateTestReport(self.EXPECTED_CONTENT_TEST_REPORT_PATH, self.ACTUAL_CONTENT_TEST_REPORT_PATH):
+                logging.error("Content Test report validation failed")
+                sys.exit(12)
+
+            if not evaluateTests():
+                logging.error("Test evaluation failed")
+                sys.exit(13)
+
+            if not self.validateDraft():
+                logging.error("Draft test failed")
+                sys.exit(14)
+
+            logging.info("Testing completed succesfully")
+            sys.exit(0)
                 
         except Exception as e:
             logging.error(f"Error during test execution: {str(e)}")

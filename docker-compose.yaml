@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  content-compiler:
+    image: content-compiler:latest
+    build:
+      context: ./contentCompiler/
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app
+    command: npm start

@@ -55,8 +55,8 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
         # Combine all errors
         errors = linkErrors + imageErrors + tagErrors + errors
 
-        # If there are any errors, the file is considered a draft
-        if(errors):
+        # If there are any errors, the file is considered a draft unless the ignore tag is used
+        if(errors and not isIgnore):
             isDraft = True
 
         appendFileToSpecificList(errors, todoItems, filePath, srcDirPath, taxonomie, newTags)

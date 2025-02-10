@@ -55,7 +55,7 @@ class ContentCompiler:
             logging.info("Reports generated successfully")
             
         except Exception as e:
-            logging.error(f"Error during compilation: {str(e)}")
+            logging.error(f"Error during compilation: {str(e)}", exc_info=True)
             raise
 
 def main() -> None:

@@ -4,6 +4,7 @@ parsedFiles = []												                            # Track the status of ea
 failedFiles = []												                            # Track the status of each failed file
 failedImages = []												                            # Track which images don't start with a 4C/ID component
 WIPFiles = []													                            # Track the files that contain Work-in-progress items
+ignoredFiles = []												                            # Track the files that have an ignore tag
 taxcoReport = {}												                            # Report 1 data
 contentReport = {}												                            # Report 2 data
 
@@ -42,6 +43,7 @@ ERROR_INVALID_TAXCO = "Ongeldige taxco: "
 ERROR_NO_TAXCO_FOUND = "Geen taxco gevonden"
 ERROR_TAXCO_NOT_FOUND = "Taxco niet in dataset: "
 ERROR_TAXCO_NOT_NEEDED = "Taxco gebruikt wanneer niet nodig: "
+ERROR_IGNORE_TAG_USED = "Bestand wordt genegeerd door ignore tag"
 
 # Error message for images
 ERROR_IMAGE_NOT_FOUND = "Afbeelding niet gevonden: "

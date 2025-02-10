@@ -112,3 +112,14 @@ def extractHeaderValues(content, fieldName):
 # Helper function to find all the To-Do items in the content of a markdown file.	
 def findWIPItems(content):
     return re.findall(TODO_PATTERN, content)
+
+# Helper function to check if a file has an ignore tag.
+def hasIgnoreTag(content, filePath):
+    ignoreTAG = extractHeaderValues(content, 'ignore')
+        
+    if ignoreTAG:        
+        if "true" in ignoreTAG:
+            logging.info(f"File has an ignore tag, ignoring file: {filePath}")
+            return True
+            
+    return False

@@ -1,11 +1,11 @@
 import logging
 from pathlib import Path
-from config import failedFiles, parsedFiles, WIPFiles
-from config import ERROR_NO_TAXCO_FOUND, FAIL_CROSS_ICON, WARNING_ICON, SUCCESS_ICON, TODO_ITEMS_ICON, IGNORE_FOLDERS, ERROR_WIP_FOUND, ERROR_TAXCO_NOT_NEEDED, NOT_NEEDED_ICON
+from config import failedFiles, parsedFiles, WIPFiles, ignoredFiles
+from config import ERROR_NO_TAXCO_FOUND, FAIL_CROSS_ICON, WARNING_ICON, SUCCESS_ICON, TODO_ITEMS_ICON, IGNORE_FOLDERS, ERROR_WIP_FOUND, ERROR_TAXCO_NOT_NEEDED, NOT_NEEDED_ICON, ERROR_IGNORE_TAG_USED
 from files.images import copyImages
 from files.links import updateDynamicLinks
 from report.table import createFileReportRow
-from files.markdownUtils import extractHeaderValues, generateTags, findWIPItems
+from files.markdownUtils import extractHeaderValues, generateTags, findWIPItems, hasIgnoreTag
 
 
 # Update markdown files in the source directory
@@ -20,7 +20,12 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
         relativePath = filePath.relative_to(srcDirPath)
         destAndRelativePath = destDirPath / relativePath
         errors = []
+        tagErrors = []
+        todoItems = []
+        taxonomie = []
+        newTags = []
         isDraft = False
+        isIgnore = False
 
         # Skip curtain folders
         if any(folder in str(filePath) for folder in IGNORE_FOLDERS):
@@ -33,13 +38,19 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
         content, linkErrors = updateDynamicLinks(filePath, content, skipValidateDynamicLinks)
         imageErrors = copyImages(content, srcDirPath, destDirPath)
         existingTags = extractHeaderValues(content, 'tags')
-        taxonomie = extractHeaderValues(content, 'taxonomie')
-        newTags, tagErrors = generateTags(taxonomie, existingTags, filePath)
         difficulty = extractHeaderValues(content, 'difficulty')
-        todoItems = findWIPItems(content)
+            
+        # Check if the file has a ignore tag
+        if hasIgnoreTag(content, filePath):
+            isIgnore = True
+            errors.append(ERROR_IGNORE_TAG_USED)
+        else:
+            taxonomie = extractHeaderValues(content, 'taxonomie')
+            newTags, tagErrors = generateTags(taxonomie, existingTags, filePath)
+            todoItems = findWIPItems(content)
 
-        if(todoItems):
-            errors.append(ERROR_WIP_FOUND + "<br>" + '<br>'.join([f"{item}" for item in todoItems]))
+            if(todoItems):
+                errors.append(ERROR_WIP_FOUND + "<br>" + '<br>'.join([f"{item}" for item in todoItems]))
 
         # Combine all errors
         errors = linkErrors + imageErrors + tagErrors + errors
@@ -49,25 +60,29 @@ def parseMarkdownFiles(srcDir, destDir, skipValidateDynamicLinks):
             isDraft = True
 
         appendFileToSpecificList(errors, todoItems, filePath, srcDirPath, taxonomie, newTags)
-        saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, content, destAndRelativePath)
+        saveParsedFile(filePath, taxonomie, newTags, difficulty, isDraft, isIgnore, content, destAndRelativePath)
 
 # Fill the different lists used for the report
 def appendFileToSpecificList(errors, todoItems, filePath, srcDir, taxonomie, tags):
     if errors:
-        # Based on the type of error, add the file to the correct list
-        if(todoItems):
-            WIPFiles.append(createFileReportRow(TODO_ITEMS_ICON, filePath, srcDir, taxonomie, tags, errors))
-        elif(ERROR_NO_TAXCO_FOUND in errors): 
-            failedFiles.append(createFileReportRow(FAIL_CROSS_ICON, filePath, srcDir, taxonomie, tags, errors))
-        elif any(ERROR_TAXCO_NOT_NEEDED in error for error in errors):
-            failedFiles.append(createFileReportRow(NOT_NEEDED_ICON, filePath, srcDir, taxonomie, tags, errors))
-        else: 
-            failedFiles.append(createFileReportRow(WARNING_ICON, filePath, srcDir, taxonomie, tags, errors))
+        icon, targetList = WARNING_ICON, failedFiles  # Default case
+
+        if todoItems:
+            icon, targetList = TODO_ITEMS_ICON, WIPFiles
+        elif ERROR_NO_TAXCO_FOUND in errors:
+            icon, targetList = FAIL_CROSS_ICON, failedFiles
+        elif ERROR_TAXCO_NOT_NEEDED in errors:
+            icon, targetList = NOT_NEEDED_ICON, failedFiles
+        elif ERROR_IGNORE_TAG_USED in errors:
+            icon, targetList = WARNING_ICON, ignoredFiles
+
+        targetList.append(createFileReportRow(icon, filePath, srcDir, taxonomie, tags, errors))
     else:
         parsedFiles.append(createFileReportRow(SUCCESS_ICON, filePath, srcDir, taxonomie, tags, errors))
 
+
 # Combines everything into a new md file
-def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, content, destPath):
+def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, isIgnore, content, destPath):
     newContent = (
         f"---\ntitle: {filePath.stem}\ntaxonomie: {taxonomie}\ntags:\n" +
         '\n'.join([f"- {tag}" for tag in tags]) +
@@ -79,6 +94,9 @@ def saveParsedFile(filePath, taxonomie, tags, difficulty, isDraft, content, dest
         
     if isDraft:
         newContent += "draft: true \n"
+        
+    if isIgnore:
+        newContent += "ignore: true \n"
 
     newContent += "---" + content.split('---', 2)[-1]
 

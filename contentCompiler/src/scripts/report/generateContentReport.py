@@ -1,5 +1,5 @@
 from report.table import formatFileReportTable, formatImageReportTable
-from config import WIPFiles, failedFiles, failedImages, parsedFiles
+from config import WIPFiles, failedFiles, failedImages, parsedFiles, ignoredFiles
 from config import WARNING_ICON, FAIL_CROSS_ICON, NOT_NEEDED_ICON
 
 
@@ -29,6 +29,12 @@ def generateContentReport(reportPath):
         f.write("## Gefaalde images\n")
         f.write("*Doel: De onderstaande images worden niet gebruikt in een bestand.*\n\n")
         f.write(formatImageReportTable(sorted(failedImages, key=lambda x: x['image'])))
+        
+        f.write('\n\n')
+        
+        f.write("## Genegeerde bestanden\n")
+        f.write("*Doel: De onderstaande bestanden worden genegeerd.*\n\n")
+        f.write(formatFileReportTable(sorted(ignoredFiles, key=lambda x: x['file'])))
 
         f.write('\n\n')
 
